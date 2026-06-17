@@ -1,0 +1,1471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jiminy Snippet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3f7f2;
+      --panel: #ffffff;
+      --ink: #17231e;
+      --muted: #5f7068;
+      --line: #d7e1db;
+      --line-strong: #abc0b5;
+      --cqu-green: #007a53;
+      --cqu-green-dark: #00583d;
+      --cqu-green-deep: #003f2f;
+      --cqu-mint: #dff2e8;
+      --cqu-lime: #b7d433;
+      --cqu-gold: #ffd45a;
+      --red: #b84b3f;
+      --blue: #246b8f;
+      --shadow: 0 12px 32px rgba(0, 63, 47, 0.1);
+      font-family: "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 36px;
+      border-radius: 6px;
+      padding: 0 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      border-color: var(--cqu-green);
+      color: var(--cqu-green-dark);
+    }
+
+    button.primary {
+      border-color: var(--cqu-green);
+      background: var(--cqu-green);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--cqu-green-dark);
+      color: #fff;
+    }
+
+    button.danger {
+      color: var(--red);
+    }
+
+    button.icon {
+      width: 36px;
+      padding: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--cqu-green);
+      box-shadow: 0 0 0 3px rgba(0, 122, 83, 0.16);
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      border-bottom: 4px solid var(--cqu-lime);
+      background:
+        linear-gradient(90deg, rgba(0, 63, 47, 0.98), rgba(0, 122, 83, 0.96)),
+        var(--cqu-green-deep);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      color: #fff;
+    }
+
+    .topbar {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--cqu-green-deep);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      box-shadow: inset 0 -5px 0 var(--cqu-gold);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .subtle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    header .subtle {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .top-actions button {
+      border-color: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .top-actions button:hover {
+      border-color: #fff;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .top-actions button.primary {
+      border-color: var(--cqu-gold);
+      background: var(--cqu-gold);
+      color: var(--cqu-green-deep);
+      font-weight: 800;
+    }
+
+    main {
+      max-width: 1500px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 240px minmax(320px, 420px) minmax(440px, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .collection-rail {
+      position: sticky;
+      top: 82px;
+      align-self: start;
+    }
+
+    .collection-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .collection-btn {
+      width: 100%;
+      justify-content: space-between;
+      border-color: transparent;
+      background: transparent;
+      color: var(--ink);
+      min-height: 34px;
+    }
+
+    .collection-btn:hover,
+    .collection-btn.active {
+      border-color: var(--line);
+      background: var(--cqu-mint);
+      color: var(--cqu-green-dark);
+    }
+
+    .collection-count {
+      min-width: 24px;
+      border-radius: 99px;
+      padding: 2px 6px;
+      background: rgba(0, 122, 83, 0.12);
+      color: var(--cqu-green-dark);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f7fbf8);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .panel-body {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .snippet-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .snippet-actions,
+    .compose-actions,
+    .field-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .field-toolbar {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fbf9;
+      padding: 8px;
+    }
+
+    .field-toolbar button {
+      min-height: 30px;
+      font-size: 12px;
+    }
+
+    .rich-editor-shell {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .rich-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbf9;
+      padding: 8px;
+    }
+
+    .rich-toolbar button {
+      min-height: 30px;
+      min-width: 34px;
+      padding: 0 9px;
+      font-weight: 800;
+    }
+
+    .rich-toolbar button.active {
+      border-color: var(--cqu-green);
+      background: var(--cqu-mint);
+      color: var(--cqu-green-dark);
+    }
+
+    .report-editor {
+      min-height: 260px;
+      padding: 12px;
+      outline: none;
+      line-height: 1.55;
+    }
+
+    .report-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr 150px;
+      gap: 8px;
+    }
+
+    .snippet-list {
+      display: grid;
+      gap: 8px;
+      max-height: 46vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .snippet-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      background: #fbfcfa;
+    }
+
+    .snippet-item.selected {
+      border-color: var(--cqu-green);
+      background: var(--cqu-mint);
+    }
+
+    .snippet-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .keyword {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      font-weight: 800;
+      color: var(--cqu-green-dark);
+    }
+
+    .category {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 3px 7px;
+      border-radius: 99px;
+      background: #eef0ed;
+      flex: 0 0 auto;
+    }
+
+    .snippet-text {
+      color: #38403b;
+      line-height: 1.42;
+      font-size: 14px;
+    }
+
+    .abbr-pill {
+      border-radius: 999px;
+      background: #edf1ee;
+      color: #324039;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .mini-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .report-shell {
+      display: grid;
+      gap: 14px;
+    }
+
+    .selected-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 38px;
+      align-items: center;
+    }
+
+    .chip {
+      border: 1px solid rgba(0, 122, 83, 0.28);
+      background: var(--cqu-mint);
+      color: var(--cqu-green-dark);
+      border-radius: 99px;
+      padding: 5px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .chip.dragging {
+      opacity: 0.45;
+      cursor: grabbing;
+    }
+
+    .chip.drag-over {
+      outline: 2px solid var(--cqu-green);
+      outline-offset: 2px;
+    }
+
+    .chip button {
+      min-height: 22px;
+      width: 22px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .report-preview {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      min-height: 460px;
+      line-height: 1.55;
+      color: #202522;
+    }
+
+    .report-preview h2 {
+      margin: 0 0 4px;
+      font-size: 22px;
+    }
+
+    .report-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 18px;
+      margin: 0 0 20px;
+      color: #4d5752;
+      font-size: 13px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 14px;
+    }
+
+    .report-preview p {
+      margin: 0 0 12px;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      color: var(--muted);
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .collection-rail {
+        position: static;
+      }
+
+      .snippet-list {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .top-actions,
+      .top-actions button {
+        width: 100%;
+      }
+
+      main {
+        padding: 10px;
+      }
+
+      .form-grid,
+      .search-row,
+      .report-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      header,
+      .collection-rail,
+      .library-panel,
+      .compose-panel,
+      .preview-head {
+        display: none !important;
+      }
+
+      main {
+        display: block;
+        padding: 0;
+        max-width: none;
+      }
+
+      .panel,
+      .report-preview {
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .report-preview {
+        padding: 0;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="topbar">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">JS</div>
+          <div>
+            <h1>Jiminy Snippet</h1>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields.</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button type="button" id="exportBtn" title="Export snippets and app data">Backup Data</button>
+          <button type="button" id="importBtn" title="Import saved app data">Import Data</button>
+          <button type="button" id="resetBtn" class="danger" title="Restore starter snippets">Reset</button>
+          <button type="button" id="printBtn" class="primary" title="Print the report">Print</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <aside class="panel collection-rail">
+        <div class="panel-head">
+          <h2>Collections</h2>
+        </div>
+        <div class="panel-body">
+          <div id="collectionList" class="collection-list" aria-live="polite"></div>
+          <p id="libraryStatus" class="subtle"></p>
+        </div>
+      </aside>
+
+      <section class="workspace library-panel">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>My Snippets</h2>
+            <button type="button" id="newSnippetBtn">New</button>
+          </div>
+          <div class="panel-body">
+            <div class="search-row">
+              <label>
+                Search
+                <input id="searchInput" type="search" placeholder="Abbreviation or comment">
+              </label>
+              <label>
+                Collection
+                <select id="categoryFilter"></select>
+              </label>
+            </div>
+            <div id="snippetList" class="snippet-list" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2 id="snippetFormTitle">New Snippet</h2>
+          </div>
+          <form id="snippetForm" class="panel-body snippet-form">
+            <input id="snippetId" type="hidden">
+            <div class="form-grid">
+              <label>
+                Abbreviation
+                <input id="keywordInput" required placeholder="timing">
+              </label>
+              <label>
+                Collection
+                <input id="categoryInput" required placeholder="Work Habits">
+              </label>
+              <label class="span-2">
+                Content Type
+                <select id="contentTypeInput">
+                  <option>Plain Text</option>
+                  <option>Student Report Comment</option>
+                </select>
+              </label>
+              <div class="span-2">
+                <label>
+                  Insert Field
+                  <div class="field-toolbar" aria-label="Insert field into snippet">
+                    <button type="button" data-field="{name}">First Name</button>
+                    <button type="button" data-field="{fullname}">Full Name</button>
+                    <button type="button" data-field="{unit}">Unit</button>
+                    <button type="button" data-field="{assessment}">Assessment</button>
+                    <button type="button" data-field="{teachingStaff}">Teaching Staff</button>
+                    <button type="button" data-field="{date}">Date</button>
+                  </div>
+                </label>
+              </div>
+              <label class="span-2">
+                Expanded Comment
+                <textarea id="textInput" required rows="7" placeholder="Please look at your timing. Use {name}, {fullname}, {unit}, {assessment}, {teachingStaff}, or {date} for dynamic fields."></textarea>
+              </label>
+            </div>
+            <div class="snippet-actions">
+              <button type="submit" class="primary">Save Snippet</button>
+              <button type="button" id="cancelEditBtn">Clear</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="report-shell">
+        <div class="panel compose-panel">
+          <div class="panel-head">
+            <h2>Report Information</h2>
+          </div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <label>
+                Student
+                <input id="studentInput" placeholder="Student name">
+              </label>
+              <label>
+                Unit
+                <input id="subjectInput" placeholder="Unit name or code">
+              </label>
+              <label>
+                Assessment
+                <input id="assessmentInput" placeholder="Assessment task">
+              </label>
+              <label>
+                Teaching Staff
+                <input id="teacherInput" placeholder="Teaching staff name">
+              </label>
+            </div>
+            <label>
+              Selected Abbreviations
+              <div id="selectedSnippets" class="selected-row"></div>
+            </label>
+            <div class="compose-actions">
+              <button type="button" id="generateBtn" class="primary">Generate Report</button>
+              <button type="button" id="copyBtn" title="Copy the full report">Copy Report</button>
+              <button type="button" id="saveReportBtn">Save HTML</button>
+              <button type="button" id="saveTextBtn">Save Text</button>
+              <button type="button" id="clearReportBtn">Clear Report</button>
+            </div>
+            <label>
+              Rich Text Report
+              <div class="rich-editor-shell">
+                <div class="rich-toolbar" aria-label="Report formatting tools">
+                  <button type="button" data-command="bold" title="Bold">B</button>
+                  <button type="button" data-command="italic" title="Italic"><em>I</em></button>
+                  <button type="button" data-command="underline" title="Underline"><u>U</u></button>
+                  <button type="button" data-command="insertUnorderedList" title="Bulleted list">List</button>
+                  <button type="button" data-command="justifyLeft" title="Align left">Left</button>
+                  <button type="button" data-command="justifyCenter" title="Align center">Centre</button>
+                  <button type="button" data-command="undo" title="Undo">Undo</button>
+                  <button type="button" data-command="redo" title="Redo">Redo</button>
+                </div>
+                <div id="reportText" class="report-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Select snippets, then generate a report."></div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head preview-head">
+            <h2>Print Preview</h2>
+          </div>
+          <div class="panel-body">
+            <article id="printPreview" class="report-preview"></article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input id="importFile" class="hidden" type="file" accept="application/json">
+
+  <script>
+    function createId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return `snippet-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    const starterSnippets = [
+      {
+        id: createId(),
+        keyword: "timing",
+        category: "Work Habits",
+        contentType: "Student Report Comment",
+        text: "{student} should look at timing and aim to pace responses more evenly across {assessment}."
+      },
+      {
+        id: createId(),
+        keyword: "evidence",
+        category: "Analysis",
+        contentType: "Student Report Comment",
+        text: "Your response would be stronger with more specific evidence to support each point."
+      },
+      {
+        id: createId(),
+        keyword: "structure",
+        category: "Writing",
+        contentType: "Student Report Comment",
+        text: "Your ideas are promising; focus on using clearer paragraph structure so each point develops logically."
+      },
+      {
+        id: createId(),
+        keyword: "excellent-effort",
+        category: "Achievement",
+        contentType: "Student Report Comment",
+        text: "{student} demonstrated excellent effort and a positive approach to {unit}."
+      },
+      {
+        id: createId(),
+        keyword: "proofread",
+        category: "Writing",
+        contentType: "Student Report Comment",
+        text: "Take time to proofread your work carefully, checking punctuation, spelling, and sentence clarity."
+      },
+      {
+        id: createId(),
+        keyword: "next-steps",
+        category: "Improvement",
+        contentType: "Student Report Comment",
+        text: "For your next assessment, set aside revision time and use the task criteria as a checklist before submission."
+      }
+    ];
+
+    const storageKey = "student-report-text-expander-v1";
+
+    const state = {
+      snippets: [],
+      selectedIds: [],
+      details: {
+        student: "",
+        subject: "",
+        assessment: "",
+        teacher: ""
+      },
+      reportText: ""
+    };
+
+    const els = {
+      snippetList: document.querySelector("#snippetList"),
+      selectedSnippets: document.querySelector("#selectedSnippets"),
+      categoryFilter: document.querySelector("#categoryFilter"),
+      searchInput: document.querySelector("#searchInput"),
+      snippetForm: document.querySelector("#snippetForm"),
+      snippetFormTitle: document.querySelector("#snippetFormTitle"),
+      snippetId: document.querySelector("#snippetId"),
+      keywordInput: document.querySelector("#keywordInput"),
+      categoryInput: document.querySelector("#categoryInput"),
+      contentTypeInput: document.querySelector("#contentTypeInput"),
+      textInput: document.querySelector("#textInput"),
+      collectionList: document.querySelector("#collectionList"),
+      libraryStatus: document.querySelector("#libraryStatus"),
+      cancelEditBtn: document.querySelector("#cancelEditBtn"),
+      newSnippetBtn: document.querySelector("#newSnippetBtn"),
+      studentInput: document.querySelector("#studentInput"),
+      subjectInput: document.querySelector("#subjectInput"),
+      assessmentInput: document.querySelector("#assessmentInput"),
+      teacherInput: document.querySelector("#teacherInput"),
+      generateBtn: document.querySelector("#generateBtn"),
+      copyBtn: document.querySelector("#copyBtn"),
+      saveReportBtn: document.querySelector("#saveReportBtn"),
+      saveTextBtn: document.querySelector("#saveTextBtn"),
+      clearReportBtn: document.querySelector("#clearReportBtn"),
+      reportText: document.querySelector("#reportText"),
+      printPreview: document.querySelector("#printPreview"),
+      printBtn: document.querySelector("#printBtn"),
+      exportBtn: document.querySelector("#exportBtn"),
+      importBtn: document.querySelector("#importBtn"),
+      importFile: document.querySelector("#importFile"),
+      resetBtn: document.querySelector("#resetBtn")
+    };
+
+    function loadState() {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) {
+        state.snippets = [...starterSnippets];
+        saveState();
+        return;
+      }
+
+      try {
+        const data = JSON.parse(saved);
+        state.snippets = Array.isArray(data.snippets) ? data.snippets : [...starterSnippets];
+        state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
+        state.details = { ...state.details, ...(data.details || {}) };
+        state.reportText = data.reportText || "";
+      } catch {
+        state.snippets = [...starterSnippets];
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function reportHtml() {
+      return els.reportText.innerHTML.trim();
+    }
+
+    function reportPlainText() {
+      return els.reportText.innerText.trim();
+    }
+
+    function sanitizeReportHtml(html) {
+      const template = document.createElement("template");
+      template.innerHTML = html;
+      template.content.querySelectorAll("script, style, iframe, object, embed").forEach(node => node.remove());
+      template.content.querySelectorAll("*").forEach(node => {
+        [...node.attributes].forEach(attribute => {
+          if (attribute.name === "style") {
+            const match = attribute.value.match(/text-align:\s*(left|center|right|justify)/i);
+            if (match) {
+              node.setAttribute("style", `text-align: ${match[1].toLowerCase()};`);
+              return;
+            }
+          }
+          if (!["href", "target"].includes(attribute.name)) {
+            node.removeAttribute(attribute.name);
+          }
+        });
+      });
+      return template.innerHTML;
+    }
+
+    function paragraphsToHtml(text) {
+      return text
+        .split(/\n{2,}/)
+        .map(paragraph => `<p>${escapeHtml(paragraph).replaceAll("\n", "<br>")}</p>`)
+        .join("");
+    }
+
+    function titleCaseName(value) {
+      return String(value || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .split(" ")
+        .map(part => part
+          .split("-")
+          .map(piece => piece ? `${piece.charAt(0).toUpperCase()}${piece.slice(1).toLowerCase()}` : "")
+          .join("-"))
+        .join(" ");
+    }
+
+    function firstName(value) {
+      return titleCaseName(value).split(" ")[0] || "";
+    }
+
+    function getCategories() {
+      return [...new Set(state.snippets.map(snippet => snippet.category).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    function renderCategoryFilter() {
+      const current = els.categoryFilter.value;
+      const categories = getCategories();
+      els.categoryFilter.innerHTML = [
+        '<option value="">All</option>',
+        ...categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      ].join("");
+      els.categoryFilter.value = categories.includes(current) ? current : "";
+    }
+
+    function renderCollections() {
+      const categories = getCategories();
+      const total = state.snippets.length;
+      const active = els.categoryFilter.value;
+      const collectionButtons = [
+        `<button type="button" class="collection-btn ${active ? "" : "active"}" data-collection="">
+          <span>All Snippets</span><span class="collection-count">${total}</span>
+        </button>`,
+        ...categories.map(category => {
+          const count = state.snippets.filter(snippet => snippet.category === category).length;
+          return `<button type="button" class="collection-btn ${active === category ? "active" : ""}" data-collection="${escapeHtml(category)}">
+            <span>${escapeHtml(category)}</span><span class="collection-count">${count}</span>
+          </button>`;
+        })
+      ];
+      els.collectionList.innerHTML = collectionButtons.join("");
+      els.libraryStatus.textContent = `${total} snippets in ${categories.length || 1} collection${categories.length === 1 ? "" : "s"}`;
+    }
+
+    function filteredSnippets() {
+      const query = els.searchInput.value.trim().toLowerCase();
+      const category = els.categoryFilter.value;
+      return state.snippets
+        .filter(snippet => !category || snippet.category === category)
+        .filter(snippet => {
+          if (!query) return true;
+          return `${snippet.keyword} ${snippet.category} ${snippet.text}`.toLowerCase().includes(query);
+        })
+        .sort((a, b) => a.keyword.localeCompare(b.keyword));
+    }
+
+    function renderSnippets() {
+      renderCategoryFilter();
+      renderCollections();
+      const snippets = filteredSnippets();
+
+      if (!snippets.length) {
+        els.snippetList.innerHTML = '<div class="empty">No snippets match the current filter.</div>';
+        return;
+      }
+
+      els.snippetList.innerHTML = snippets.map(snippet => {
+        const selected = state.selectedIds.includes(snippet.id);
+        return `
+          <div class="snippet-item ${selected ? "selected" : ""}">
+            <div class="snippet-top">
+              <div class="keyword">${escapeHtml(snippet.keyword)}</div>
+              <div class="abbr-pill">${escapeHtml(snippet.keyword)}</div>
+            </div>
+            <div class="category">${escapeHtml(snippet.category)}</div>
+            <div class="snippet-text">${escapeHtml(snippet.text)}</div>
+            <div class="mini-actions">
+              <button type="button" data-action="toggle" data-id="${snippet.id}">${selected ? "Remove" : "Select"}</button>
+              <button type="button" data-action="edit" data-id="${snippet.id}">Edit</button>
+              <button type="button" data-action="delete" data-id="${snippet.id}" class="danger">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSelected() {
+      const selected = state.selectedIds
+        .map(id => state.snippets.find(snippet => snippet.id === id))
+        .filter(Boolean);
+
+      if (!selected.length) {
+        els.selectedSnippets.innerHTML = '<span class="subtle">No snippets selected.</span>';
+        return;
+      }
+
+      els.selectedSnippets.innerHTML = selected.map(snippet => `
+        <span class="chip" draggable="true" data-selected-id="${snippet.id}" title="Drag to reorder">
+          ${escapeHtml(snippet.keyword)}
+          <button type="button" title="Remove ${escapeHtml(snippet.keyword)}" data-remove="${snippet.id}">x</button>
+        </span>
+      `).join("");
+    }
+
+    function renderPreview() {
+      const details = state.details;
+      const fullName = titleCaseName(details.student);
+      const html = sanitizeReportHtml(reportHtml());
+      const body = reportPlainText()
+        ? html
+        : '<p class="subtle">The report preview will appear here.</p>';
+
+      els.printPreview.innerHTML = `
+        <h2>${escapeHtml(fullName || "Student Report")}</h2>
+        <div class="report-meta">
+          <div><strong>Unit:</strong> ${escapeHtml(details.subject || "-")}</div>
+          <div><strong>Assessment:</strong> ${escapeHtml(details.assessment || "-")}</div>
+          <div><strong>Teaching Staff:</strong> ${escapeHtml(details.teacher || "-")}</div>
+          <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
+        </div>
+        ${body}
+      `;
+    }
+
+    function syncDetailsFromInputs() {
+      state.details = {
+        student: els.studentInput.value,
+        subject: els.subjectInput.value,
+        assessment: els.assessmentInput.value,
+        teacher: els.teacherInput.value
+      };
+      state.reportText = reportHtml();
+      saveState();
+      renderPreview();
+    }
+
+    function renderDetails() {
+      els.studentInput.value = state.details.student || "";
+      els.subjectInput.value = state.details.subject || "";
+      els.assessmentInput.value = state.details.assessment || "";
+      els.teacherInput.value = state.details.teacher || "";
+      els.reportText.innerHTML = state.reportText && state.reportText.includes("<")
+        ? sanitizeReportHtml(state.reportText)
+        : paragraphsToHtml(state.reportText || "");
+    }
+
+    function renderAll() {
+      renderSnippets();
+      renderSelected();
+      renderDetails();
+      renderPreview();
+    }
+
+    function resetSnippetForm() {
+      els.snippetFormTitle.textContent = "New Snippet";
+      els.snippetId.value = "";
+      els.snippetForm.reset();
+      els.keywordInput.focus();
+    }
+
+    function editSnippet(id) {
+      const snippet = state.snippets.find(item => item.id === id);
+      if (!snippet) return;
+      els.snippetFormTitle.textContent = `Snippet: ${snippet.keyword}`;
+      els.snippetId.value = snippet.id;
+      els.keywordInput.value = snippet.keyword;
+      els.categoryInput.value = snippet.category;
+      els.contentTypeInput.value = snippet.contentType || "Plain Text";
+      els.textInput.value = snippet.text;
+      els.keywordInput.focus();
+    }
+
+    function toggleSnippet(id) {
+      if (state.selectedIds.includes(id)) {
+        state.selectedIds = state.selectedIds.filter(selectedId => selectedId !== id);
+      } else {
+        state.selectedIds.push(id);
+      }
+      saveState();
+      renderSnippets();
+      renderSelected();
+    }
+
+    function reorderSelectedSnippet(draggedId, targetId) {
+      if (!draggedId || !targetId || draggedId === targetId) return;
+      const nextIds = state.selectedIds.filter(id => id !== draggedId);
+      const targetIndex = nextIds.indexOf(targetId);
+      if (targetIndex < 0) return;
+      nextIds.splice(targetIndex, 0, draggedId);
+      state.selectedIds = nextIds;
+      saveState();
+      renderSelected();
+      renderSnippets();
+    }
+
+    function deleteSnippet(id) {
+      const snippet = state.snippets.find(item => item.id === id);
+      if (!snippet || !confirm(`Delete snippet "${snippet.keyword}"?`)) return;
+      state.snippets = state.snippets.filter(item => item.id !== id);
+      state.selectedIds = state.selectedIds.filter(selectedId => selectedId !== id);
+      saveState();
+      resetSnippetForm();
+      renderAll();
+    }
+
+    function generateReport() {
+      const selected = state.selectedIds
+        .map(id => state.snippets.find(snippet => snippet.id === id))
+        .filter(Boolean);
+
+      const comments = selected.map(snippet => expandFields(snippet.text));
+      els.reportText.innerHTML = paragraphsToHtml(comments.filter(Boolean).join("\n\n"));
+      syncDetailsFromInputs();
+    }
+
+    function expandFields(text) {
+      const details = state.details;
+      const fullName = titleCaseName(details.student);
+      const fields = {
+        "{name}": firstName(details.student),
+        "{fullname}": fullName,
+        "{student}": fullName,
+        "{unit}": details.subject || "",
+        "{subject}": details.subject || "",
+        "{assessment}": details.assessment || "",
+        "{teachingStaff}": details.teacher || "",
+        "{teacher}": details.teacher || "",
+        "{date}": new Date().toLocaleDateString()
+      };
+      return Object.entries(fields).reduce(
+        (result, [field, value]) => result.replaceAll(field, value),
+        text
+      );
+    }
+
+    function insertField(field) {
+      const input = els.textInput;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      input.value = `${input.value.slice(0, start)}${field}${input.value.slice(end)}`;
+      const cursor = start + field.length;
+      input.focus();
+      input.setSelectionRange(cursor, cursor);
+    }
+
+    function runReportCommand(command) {
+      els.reportText.focus();
+      document.execCommand(command, false, null);
+      syncDetailsFromInputs();
+    }
+
+    function exportData() {
+      syncDetailsFromInputs();
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "jiminy-snippet-backup.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function fileSafeName(value, fallback) {
+      return (value || fallback)
+        .trim()
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+        .replace(/\s+/g, "-")
+        .toLowerCase()
+        .slice(0, 80) || fallback;
+    }
+
+    function exportReportText() {
+      syncDetailsFromInputs();
+      const details = state.details;
+      const fullName = titleCaseName(details.student);
+      const date = new Date().toLocaleDateString();
+      const report = sanitizeReportHtml(reportHtml()) || "<p>No report text has been generated.</p>";
+      const content = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Jiminy Snippet Student Report</title>
+  <style>
+    body { font-family: "Noto Sans", Arial, sans-serif; color: #17231e; line-height: 1.55; margin: 40px; }
+    h1 { color: #00583d; margin-bottom: 8px; }
+    .meta { border-top: 4px solid #007a53; border-bottom: 1px solid #d7e1db; padding: 14px 0; margin: 0 0 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; }
+    .report { max-width: 850px; }
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(fullName || "Student Report")}</h1>
+  <section class="meta">
+    <div><strong>Unit:</strong> ${escapeHtml(details.subject || "-")}</div>
+    <div><strong>Assessment:</strong> ${escapeHtml(details.assessment || "-")}</div>
+    <div><strong>Teaching Staff:</strong> ${escapeHtml(details.teacher || "-")}</div>
+    <div><strong>Date:</strong> ${escapeHtml(date)}</div>
+  </section>
+  <main class="report">
+    ${report}
+  </main>
+</body>
+</html>`;
+
+      const student = fileSafeName(fullName, "student");
+      const assessment = fileSafeName(details.assessment, "report");
+      const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${student}-${assessment}-jiminy-snippet-report.html`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportReportPlainText() {
+      syncDetailsFromInputs();
+      const details = state.details;
+      const fullName = titleCaseName(details.student);
+      const date = new Date().toLocaleDateString();
+      const content = [
+        fullName || "Student Report",
+        "",
+        `Unit: ${details.subject || "-"}`,
+        `Assessment: ${details.assessment || "-"}`,
+        `Teaching Staff: ${details.teacher || "-"}`,
+        `Date: ${date}`,
+        "",
+        reportPlainText() || "No report text has been generated."
+      ].join("\n");
+
+      const student = fileSafeName(fullName, "student");
+      const assessment = fileSafeName(details.assessment, "report");
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${student}-${assessment}-jiminy-snippet-report.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.snippets)) throw new Error("Missing snippets");
+          state.snippets = data.snippets.map(snippet => ({
+            id: snippet.id || createId(),
+            keyword: snippet.keyword || "",
+            category: snippet.category || "General",
+            contentType: snippet.contentType || "Plain Text",
+            text: snippet.text || ""
+          }));
+          state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
+          state.details = { ...state.details, ...(data.details || {}) };
+          state.reportText = data.reportText || "";
+          saveState();
+          renderAll();
+        } catch {
+          alert("That file could not be imported. Please choose a valid JSON export.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    els.snippetForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const id = els.snippetId.value || createId();
+      const snippet = {
+        id,
+        keyword: els.keywordInput.value.trim(),
+        category: els.categoryInput.value.trim() || "General",
+        contentType: els.contentTypeInput.value,
+        text: els.textInput.value.trim()
+      };
+
+      if (!snippet.keyword || !snippet.text) return;
+
+      const existingIndex = state.snippets.findIndex(item => item.id === id);
+      if (existingIndex >= 0) {
+        state.snippets[existingIndex] = snippet;
+      } else {
+        state.snippets.push(snippet);
+      }
+
+      saveState();
+      resetSnippetForm();
+      renderAll();
+    });
+
+    els.snippetList.addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const { action, id } = button.dataset;
+      if (action === "toggle") toggleSnippet(id);
+      if (action === "edit") editSnippet(id);
+      if (action === "delete") deleteSnippet(id);
+    });
+
+    els.collectionList.addEventListener("click", event => {
+      const button = event.target.closest("button[data-collection]");
+      if (!button) return;
+      els.categoryFilter.value = button.dataset.collection;
+      renderSnippets();
+    });
+
+    document.querySelectorAll("[data-field]").forEach(button => {
+      button.addEventListener("click", () => insertField(button.dataset.field));
+    });
+
+    els.selectedSnippets.addEventListener("click", event => {
+      const button = event.target.closest("button[data-remove]");
+      if (!button) return;
+      toggleSnippet(button.dataset.remove);
+    });
+
+    els.selectedSnippets.addEventListener("dragstart", event => {
+      const chip = event.target.closest(".chip[data-selected-id]");
+      if (!chip) return;
+      chip.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", chip.dataset.selectedId);
+    });
+
+    els.selectedSnippets.addEventListener("dragover", event => {
+      const chip = event.target.closest(".chip[data-selected-id]");
+      if (!chip) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      els.selectedSnippets.querySelectorAll(".chip.drag-over").forEach(item => item.classList.remove("drag-over"));
+      chip.classList.add("drag-over");
+    });
+
+    els.selectedSnippets.addEventListener("dragleave", event => {
+      const chip = event.target.closest(".chip[data-selected-id]");
+      if (chip) chip.classList.remove("drag-over");
+    });
+
+    els.selectedSnippets.addEventListener("drop", event => {
+      const chip = event.target.closest(".chip[data-selected-id]");
+      if (!chip) return;
+      event.preventDefault();
+      reorderSelectedSnippet(event.dataTransfer.getData("text/plain"), chip.dataset.selectedId);
+    });
+
+    els.selectedSnippets.addEventListener("dragend", () => {
+      els.selectedSnippets.querySelectorAll(".chip").forEach(chip => {
+        chip.classList.remove("dragging", "drag-over");
+      });
+    });
+
+    [els.searchInput, els.categoryFilter].forEach(input => {
+      input.addEventListener("input", renderSnippets);
+      input.addEventListener("change", renderSnippets);
+    });
+
+    [els.studentInput, els.subjectInput, els.assessmentInput, els.teacherInput, els.reportText].forEach(input => {
+      input.addEventListener("input", syncDetailsFromInputs);
+    });
+
+    document.querySelectorAll("[data-command]").forEach(button => {
+      button.addEventListener("click", () => runReportCommand(button.dataset.command));
+    });
+
+    els.generateBtn.addEventListener("click", generateReport);
+    els.cancelEditBtn.addEventListener("click", resetSnippetForm);
+    els.newSnippetBtn.addEventListener("click", resetSnippetForm);
+    els.clearReportBtn.addEventListener("click", () => {
+      els.reportText.innerHTML = "";
+      syncDetailsFromInputs();
+    });
+    els.printBtn.addEventListener("click", () => window.print());
+    els.saveReportBtn.addEventListener("click", exportReportText);
+    els.saveTextBtn.addEventListener("click", exportReportPlainText);
+    els.copyBtn.addEventListener("click", async () => {
+      const plain = reportPlainText();
+      const html = sanitizeReportHtml(reportHtml());
+      if (navigator.clipboard && window.isSecureContext) {
+        if (window.ClipboardItem) {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              "text/plain": new Blob([plain], { type: "text/plain" }),
+              "text/html": new Blob([html], { type: "text/html" })
+            })
+          ]);
+        } else {
+          await navigator.clipboard.writeText(plain);
+        }
+      } else {
+        const range = document.createRange();
+        range.selectNodeContents(els.reportText);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.execCommand("copy");
+        selection.removeAllRanges();
+      }
+      els.copyBtn.textContent = "Copied";
+      setTimeout(() => {
+        els.copyBtn.textContent = "Copy Report";
+      }, 1200);
+    });
+    els.exportBtn.addEventListener("click", exportData);
+    els.importBtn.addEventListener("click", () => els.importFile.click());
+    els.importFile.addEventListener("change", event => {
+      const [file] = event.target.files;
+      if (file) importData(file);
+      event.target.value = "";
+    });
+    els.resetBtn.addEventListener("click", () => {
+      if (!confirm("Restore the starter snippets? Your current snippet library will be replaced.")) return;
+      state.snippets = starterSnippets.map(snippet => ({ ...snippet, id: createId() }));
+      state.selectedIds = [];
+      state.reportText = "";
+      saveState();
+      renderAll();
+    });
+
+    loadState();
+    renderAll();
+  </script>
+</body>
+</html>
