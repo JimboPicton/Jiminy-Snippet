@@ -219,10 +219,12 @@
       align-items: start;
     }
 
-    .collection-rail {
+    .sidebar-rail {
       position: sticky;
       top: 82px;
       align-self: start;
+      display: grid;
+      gap: 14px;
     }
 
     .collection-list {
@@ -244,6 +246,28 @@
       border-color: var(--line);
       background: var(--cqu-mint);
       color: var(--cqu-green-dark);
+    }
+
+    .collection-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .collection-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex: 0 0 auto;
+    }
+
+    .collection-delete {
+      min-height: 24px;
+      width: 24px;
+      padding: 0;
+      border-color: transparent;
+      background: transparent;
+      color: var(--red);
     }
 
     .collection-count {
@@ -294,6 +318,42 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+    }
+
+    .stored-details {
+      background: transparent;
+      display: grid;
+      gap: 10px;
+    }
+
+    .stored-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .stored-add-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+    }
+
+    .stored-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 30px;
+    }
+
+    .collapse-btn {
+      min-height: 30px;
+      width: 34px;
+      padding: 0;
+      font-weight: 800;
+    }
+
+    .panel.collapsed .panel-body {
+      display: none;
     }
 
     .span-2 {
@@ -361,11 +421,22 @@
       padding: 12px;
       outline: none;
       line-height: 1.55;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 400;
+      text-transform: none;
     }
 
     .report-editor:empty::before {
       content: attr(data-placeholder);
       color: var(--muted);
+    }
+
+    .report-editor b,
+    .report-editor strong,
+    .report-preview b,
+    .report-preview strong {
+      font-weight: 800;
     }
 
     .search-row {
@@ -538,7 +609,7 @@
         grid-template-columns: 1fr;
       }
 
-      .collection-rail {
+      .sidebar-rail {
         position: static;
       }
 
@@ -575,7 +646,7 @@
       }
 
       header,
-      .collection-rail,
+      .sidebar-rail,
       .library-panel,
       .compose-panel,
       .preview-head {
@@ -623,13 +694,62 @@
     </header>
 
     <main>
-      <aside class="panel collection-rail">
-        <div class="panel-head">
-          <h2>Collections</h2>
+      <aside class="sidebar-rail">
+        <div class="panel" data-panel="collections">
+          <div class="panel-head">
+            <h2>Collections</h2>
+            <button type="button" class="collapse-btn" data-toggle-panel="collections" title="Collapse Collections">☰</button>
+          </div>
+          <div class="panel-body">
+            <div id="collectionList" class="collection-list" aria-live="polite"></div>
+            <p id="libraryStatus" class="subtle"></p>
+          </div>
         </div>
-        <div class="panel-body">
-          <div id="collectionList" class="collection-list" aria-live="polite"></div>
-          <p id="libraryStatus" class="subtle"></p>
+
+        <div class="panel" data-panel="storedDetails">
+          <div class="panel-head">
+            <h2>Stored Report Details</h2>
+            <button type="button" class="collapse-btn" data-toggle-panel="storedDetails" title="Collapse Stored Report Details">☰</button>
+          </div>
+          <div class="panel-body">
+            <section class="stored-details" aria-label="Stored report details">
+              <div class="stored-grid">
+                <label>
+                  Saved Units
+                  <select id="unitSelect">
+                    <option value="">Choose unit</option>
+                  </select>
+                  <div class="stored-add-row">
+                    <input id="unitAddInput" placeholder="Add unit">
+                    <button type="button" data-store-add="units">Add</button>
+                  </div>
+                  <div id="unitList" class="stored-list"></div>
+                </label>
+                <label>
+                  Saved Assessments
+                  <select id="assessmentSelect">
+                    <option value="">Choose assessment</option>
+                  </select>
+                  <div class="stored-add-row">
+                    <input id="assessmentAddInput" placeholder="Add assessment">
+                    <button type="button" data-store-add="assessments">Add</button>
+                  </div>
+                  <div id="assessmentList" class="stored-list"></div>
+                </label>
+                <label>
+                  Saved Teaching Staff
+                  <select id="teacherSelect">
+                    <option value="">Choose teaching staff</option>
+                  </select>
+                  <div class="stored-add-row">
+                    <input id="teacherAddInput" placeholder="Add teaching staff">
+                    <button type="button" data-store-add="teachingStaff">Add</button>
+                  </div>
+                  <div id="teacherList" class="stored-list"></div>
+                </label>
+              </div>
+            </section>
+          </div>
         </div>
       </aside>
 
@@ -834,6 +954,12 @@
         assessment: "",
         teacher: ""
       },
+      storedDetails: {
+        units: [],
+        assessments: [],
+        teachingStaff: []
+      },
+      collapsedPanels: {},
       reportText: ""
     };
 
@@ -857,6 +983,15 @@
       subjectInput: document.querySelector("#subjectInput"),
       assessmentInput: document.querySelector("#assessmentInput"),
       teacherInput: document.querySelector("#teacherInput"),
+      unitSelect: document.querySelector("#unitSelect"),
+      assessmentSelect: document.querySelector("#assessmentSelect"),
+      teacherSelect: document.querySelector("#teacherSelect"),
+      unitAddInput: document.querySelector("#unitAddInput"),
+      assessmentAddInput: document.querySelector("#assessmentAddInput"),
+      teacherAddInput: document.querySelector("#teacherAddInput"),
+      unitList: document.querySelector("#unitList"),
+      assessmentList: document.querySelector("#assessmentList"),
+      teacherList: document.querySelector("#teacherList"),
       generateBtn: document.querySelector("#generateBtn"),
       copyBtn: document.querySelector("#copyBtn"),
       saveReportBtn: document.querySelector("#saveReportBtn"),
@@ -871,6 +1006,8 @@
       resetBtn: document.querySelector("#resetBtn")
     };
 
+    let savedReportRange = null;
+
     function loadState() {
       const saved = localStorage.getItem(storageKey);
       if (!saved) {
@@ -884,6 +1021,14 @@
         state.snippets = Array.isArray(data.snippets) ? data.snippets : [...starterSnippets];
         state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
         state.details = { ...state.details, ...(data.details || {}) };
+        state.storedDetails = {
+          ...state.storedDetails,
+          ...(data.storedDetails || {})
+        };
+        state.collapsedPanels = {
+          ...state.collapsedPanels,
+          ...(data.collapsedPanels || {})
+        };
         state.reportText = data.reportText || "";
       } catch {
         state.snippets = [...starterSnippets];
@@ -918,9 +1063,17 @@
       template.content.querySelectorAll("*").forEach(node => {
         [...node.attributes].forEach(attribute => {
           if (attribute.name === "style") {
-            const match = attribute.value.match(/text-align:\s*(left|center|right|justify)/i);
-            if (match) {
-              node.setAttribute("style", `text-align: ${match[1].toLowerCase()};`);
+            const allowedStyles = [];
+            const textAlign = attribute.value.match(/text-align:\s*(left|center|right|justify)/i);
+            const fontWeight = attribute.value.match(/font-weight:\s*(bold|[5-9]00|[6-9]\d\d)/i);
+            const fontStyle = attribute.value.match(/font-style:\s*italic/i);
+            const textDecoration = attribute.value.match(/text-decoration(?:-line)?:\s*underline/i);
+            if (textAlign) allowedStyles.push(`text-align: ${textAlign[1].toLowerCase()}`);
+            if (fontWeight) allowedStyles.push("font-weight: 800");
+            if (fontStyle) allowedStyles.push("font-style: italic");
+            if (textDecoration) allowedStyles.push("text-decoration: underline");
+            if (allowedStyles.length) {
+              node.setAttribute("style", `${allowedStyles.join("; ")};`);
               return;
             }
           }
@@ -976,12 +1129,16 @@
       const active = els.categoryFilter.value;
       const collectionButtons = [
         `<button type="button" class="collection-btn ${active ? "" : "active"}" data-collection="">
-          <span>All Snippets</span><span class="collection-count">${total}</span>
+          <span class="collection-name">All Snippets</span><span class="collection-count">${total}</span>
         </button>`,
         ...categories.map(category => {
           const count = state.snippets.filter(snippet => snippet.category === category).length;
           return `<button type="button" class="collection-btn ${active === category ? "active" : ""}" data-collection="${escapeHtml(category)}">
-            <span>${escapeHtml(category)}</span><span class="collection-count">${count}</span>
+            <span class="collection-name">${escapeHtml(category)}</span>
+            <span class="collection-meta">
+              <span class="collection-count">${count}</span>
+              <span class="collection-delete" role="button" tabindex="0" data-delete-collection="${escapeHtml(category)}" title="Delete ${escapeHtml(category)}">x</span>
+            </span>
           </button>`;
         })
       ];
@@ -1017,9 +1174,9 @@
           <div class="snippet-item ${selected ? "selected" : ""}">
             <div class="snippet-top">
               <div class="keyword">${escapeHtml(snippet.keyword)}</div>
-              <div class="abbr-pill">${escapeHtml(snippet.keyword)}</div>
+              <div class="abbr-pill">${escapeHtml(snippet.category)}</div>
             </div>
-            <div class="category">${escapeHtml(snippet.category)}</div>
+            <div class="category">Abbreviation: ${escapeHtml(snippet.keyword)}</div>
             <div class="snippet-text">${escapeHtml(snippet.text)}</div>
             <div class="mini-actions">
               <button type="button" data-action="toggle" data-id="${snippet.id}">${selected ? "Remove" : "Select"}</button>
@@ -1091,10 +1248,101 @@
         : paragraphsToHtml(state.reportText || "");
     }
 
+    function storedConfig(key) {
+      return {
+        units: {
+          input: els.subjectInput,
+          addInput: els.unitAddInput,
+          select: els.unitSelect,
+          list: els.unitList,
+          placeholder: "Choose unit"
+        },
+        assessments: {
+          input: els.assessmentInput,
+          addInput: els.assessmentAddInput,
+          select: els.assessmentSelect,
+          list: els.assessmentList,
+          placeholder: "Choose assessment"
+        },
+        teachingStaff: {
+          input: els.teacherInput,
+          addInput: els.teacherAddInput,
+          select: els.teacherSelect,
+          list: els.teacherList,
+          placeholder: "Choose teaching staff"
+        }
+      }[key];
+    }
+
+    function sortedStoredValues(key) {
+      return [...new Set(state.storedDetails[key].filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    function renderStoredDetails() {
+      ["units", "assessments", "teachingStaff"].forEach(key => {
+        const config = storedConfig(key);
+        const values = sortedStoredValues(key);
+        config.select.innerHTML = [
+          `<option value="">${config.placeholder}</option>`,
+          ...values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+        ].join("");
+        config.select.value = values.includes(config.input.value) ? config.input.value : "";
+        config.list.innerHTML = values.length
+          ? values.map(value => `
+            <span class="chip">
+              ${escapeHtml(value)}
+              <button type="button" title="Remove ${escapeHtml(value)}" data-store-remove="${key}" data-value="${escapeHtml(value)}">x</button>
+            </span>
+          `).join("")
+          : '<span class="subtle">No saved values.</span>';
+      });
+    }
+
+    function renderPanelStates() {
+      document.querySelectorAll("[data-panel]").forEach(panel => {
+        const key = panel.dataset.panel;
+        const collapsed = Boolean(state.collapsedPanels[key]);
+        panel.classList.toggle("collapsed", collapsed);
+        const button = panel.querySelector("[data-toggle-panel]");
+        if (button) {
+          button.title = `${collapsed ? "Expand" : "Collapse"} ${panel.querySelector("h2")?.textContent || "panel"}`;
+          button.setAttribute("aria-expanded", String(!collapsed));
+        }
+      });
+    }
+
+    function togglePanel(key) {
+      state.collapsedPanels[key] = !state.collapsedPanels[key];
+      saveState();
+      renderPanelStates();
+    }
+
+    function addStoredDetail(key, value) {
+      const trimmed = value.trim();
+      if (!trimmed) return;
+      if (!state.storedDetails[key].some(item => item.toLowerCase() === trimmed.toLowerCase())) {
+        state.storedDetails[key].push(trimmed);
+      }
+      const config = storedConfig(key);
+      config.input.value = trimmed;
+      config.addInput.value = "";
+      syncDetailsFromInputs();
+      renderStoredDetails();
+    }
+
+    function removeStoredDetail(key, value) {
+      state.storedDetails[key] = state.storedDetails[key].filter(item => item !== value);
+      saveState();
+      renderStoredDetails();
+    }
+
     function renderAll() {
       renderSnippets();
       renderSelected();
       renderDetails();
+      renderStoredDetails();
+      renderPanelStates();
       renderPreview();
     }
 
@@ -1150,6 +1398,22 @@
       renderAll();
     }
 
+    function deleteCollection(name) {
+      const affected = state.snippets.filter(snippet => snippet.category === name).length;
+      const message = affected
+        ? `Delete collection "${name}"? ${affected} snippet${affected === 1 ? "" : "s"} will be moved to General.`
+        : `Delete collection "${name}"?`;
+      if (!confirm(message)) return;
+      state.snippets = state.snippets.map(snippet => (
+        snippet.category === name ? { ...snippet, category: "General" } : snippet
+      ));
+      if (els.categoryFilter.value === name) {
+        els.categoryFilter.value = "";
+      }
+      saveState();
+      renderAll();
+    }
+
     function generateReport() {
       const selected = state.selectedIds
         .map(id => state.snippets.find(snippet => snippet.id === id))
@@ -1190,9 +1454,30 @@
       input.setSelectionRange(cursor, cursor);
     }
 
+    function selectionIsInsideReport() {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return false;
+      return els.reportText.contains(selection.anchorNode) && els.reportText.contains(selection.focusNode);
+    }
+
+    function saveReportSelection() {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount || !selectionIsInsideReport()) return;
+      savedReportRange = selection.getRangeAt(0).cloneRange();
+    }
+
+    function restoreReportSelection() {
+      if (!savedReportRange) return;
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(savedReportRange);
+    }
+
     function runReportCommand(command) {
       els.reportText.focus();
+      restoreReportSelection();
       document.execCommand(command, false, null);
+      saveReportSelection();
       syncDetailsFromInputs();
     }
 
@@ -1301,6 +1586,14 @@
           }));
           state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
           state.details = { ...state.details, ...(data.details || {}) };
+          state.storedDetails = {
+            ...state.storedDetails,
+            ...(data.storedDetails || {})
+          };
+          state.collapsedPanels = {
+            ...state.collapsedPanels,
+            ...(data.collapsedPanels || {})
+          };
           state.reportText = data.reportText || "";
           saveState();
           renderAll();
@@ -1332,6 +1625,7 @@
       }
 
       saveState();
+      els.categoryFilter.value = snippet.category;
       resetSnippetForm();
       renderAll();
     });
@@ -1346,14 +1640,32 @@
     });
 
     els.collectionList.addEventListener("click", event => {
+      const deleteControl = event.target.closest("[data-delete-collection]");
+      if (deleteControl) {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteCollection(deleteControl.dataset.deleteCollection);
+        return;
+      }
       const button = event.target.closest("button[data-collection]");
       if (!button) return;
       els.categoryFilter.value = button.dataset.collection;
       renderSnippets();
     });
 
+    els.collectionList.addEventListener("keydown", event => {
+      const deleteControl = event.target.closest("[data-delete-collection]");
+      if (!deleteControl || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      deleteCollection(deleteControl.dataset.deleteCollection);
+    });
+
     document.querySelectorAll("[data-field]").forEach(button => {
       button.addEventListener("click", () => insertField(button.dataset.field));
+    });
+
+    document.querySelectorAll("[data-toggle-panel]").forEach(button => {
+      button.addEventListener("click", () => togglePanel(button.dataset.togglePanel));
     });
 
     els.selectedSnippets.addEventListener("click", event => {
@@ -1397,6 +1709,44 @@
       });
     });
 
+    document.querySelectorAll("[data-store-add]").forEach(button => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.storeAdd;
+        const config = storedConfig(key);
+        addStoredDetail(key, config.addInput.value || config.input.value);
+      });
+    });
+
+    [els.unitAddInput, els.assessmentAddInput, els.teacherAddInput].forEach(input => {
+      input.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        const key = input === els.unitAddInput
+          ? "units"
+          : input === els.assessmentAddInput
+            ? "assessments"
+            : "teachingStaff";
+        addStoredDetail(key, input.value);
+      });
+    });
+
+    [els.unitSelect, els.assessmentSelect, els.teacherSelect].forEach(select => {
+      select.addEventListener("change", () => {
+        if (!select.value) return;
+        if (select === els.unitSelect) els.subjectInput.value = select.value;
+        if (select === els.assessmentSelect) els.assessmentInput.value = select.value;
+        if (select === els.teacherSelect) els.teacherInput.value = select.value;
+        syncDetailsFromInputs();
+        renderStoredDetails();
+      });
+    });
+
+    document.querySelector(".stored-details").addEventListener("click", event => {
+      const button = event.target.closest("button[data-store-remove]");
+      if (!button) return;
+      removeStoredDetail(button.dataset.storeRemove, button.dataset.value);
+    });
+
     [els.searchInput, els.categoryFilter].forEach(input => {
       input.addEventListener("input", renderSnippets);
       input.addEventListener("change", renderSnippets);
@@ -1406,7 +1756,15 @@
       input.addEventListener("input", syncDetailsFromInputs);
     });
 
+    els.reportText.addEventListener("keyup", saveReportSelection);
+    els.reportText.addEventListener("mouseup", saveReportSelection);
+    els.reportText.addEventListener("focus", saveReportSelection);
+    document.addEventListener("selectionchange", () => {
+      if (selectionIsInsideReport()) saveReportSelection();
+    });
+
     document.querySelectorAll("[data-command]").forEach(button => {
+      button.addEventListener("mousedown", event => event.preventDefault());
       button.addEventListener("click", () => runReportCommand(button.dataset.command));
     });
 

@@ -13,6 +13,7 @@ The app saves your snippets and current report information in the browser on thi
 The app has three main working areas:
 
 - **Collections**: Groups of snippets, such as Work Habits, Writing, Analysis, or Achievement.
+- **Stored Report Details**: Saved Units, Assessment items, and Teaching Staff values.
 - **My Snippets**: The list of reusable comments. Each snippet has an abbreviation and a comment.
 - **Report Information and Report Editor**: Student details, selected snippets, generated report text, rich text editing, preview, print, and save options.
 
@@ -29,6 +30,18 @@ These fields can automatically populate snippets that use dynamic fields.
 
 Student names are cleaned up when snippets are generated. For example, `john smith` becomes `John Smith`.
 
+You can also maintain reusable lists for **Unit**, **Assessment**, and **Teaching Staff** in **Stored Report Details** on the left side of the page under **Collections**.
+
+To save a reusable value:
+
+1. Type the Unit, Assessment, or Teaching Staff value into the add box.
+2. Select **Add**, or press **Enter**.
+3. The saved value appears as a chip and becomes available in the dropdown.
+
+To use a saved value, choose it from the matching dropdown. To remove a saved value, select the `x` on its chip.
+
+Use the menu button in the **Collections** or **Stored Report Details** header to minimise or expand that box.
+
 ## 4. Create A New Snippet
 
 1. Select **New** in the **My Snippets** panel.
@@ -41,6 +54,10 @@ Student names are cleaned up when snippets are generated. For example, `john smi
 5. Write the expanded comment.
    Example: `Please look at your timing and aim to pace your responses more evenly.`
 6. Select **Save Snippet**.
+
+If you type a new collection name while editing or creating a snippet, that collection is created automatically. After saving, Jiminy Snippet switches to that collection so you can confirm the snippet moved there.
+
+To delete a collection, select the `x` beside the collection name in the **Collections** panel. Snippets in that collection are kept and moved to `General`.
 
 ## 5. Use Dynamic Fields In Snippets
 
@@ -130,7 +147,7 @@ Use these options in the top toolbar:
 - **Import Data**: Restores a previous JSON backup.
 - **Reset**: Restores the starter snippet library. This replaces your current snippets.
 
-Keep backup files somewhere safe if you plan to use Jiminy Snippet across different computers or browsers.
+Backups also include saved Units, Assessment items, and Teaching Staff. Keep backup files somewhere safe if you plan to use Jiminy Snippet across different computers or browsers.
 
 ## 11. Suggested Workflow
 
