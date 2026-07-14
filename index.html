@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jiminy Snippet</title>
+  <meta name="application-version" content="2.0.0">
+  <meta name="build-date" content="2026-07-15">
+  <title>Jiminy Snippet v2.0.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -192,6 +194,18 @@
 
     header .subtle {
       color: rgba(255, 255, 255, 0.78);
+    }
+
+    .build-stamp {
+      display: inline-block;
+      margin-left: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 99px;
+      padding: 1px 6px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .top-actions {
@@ -776,7 +790,7 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields.</p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.0.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
@@ -1088,10 +1102,14 @@
       }
     ];
 
+    const appVersion = "2.0.0";
+    const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
     const stateSchemaVersion = 2;
 
     const state = {
+      appVersion,
+      buildDate: appBuildDate,
       schemaVersion: stateSchemaVersion,
       snippets: [],
       selectedIds: [],

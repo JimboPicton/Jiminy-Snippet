@@ -6,6 +6,8 @@ Jiminy Snippet helps you build student assessment reports from reusable snippets
 
 Open `index.html` in your web browser.
 
+The current version number and build date appear in the green header, making it easy to confirm which build is open.
+
 The app saves your snippets and current report information in the browser on this computer. Use **Backup Data** regularly if you want a portable copy.
 
 ## 2. Understand The Main Areas

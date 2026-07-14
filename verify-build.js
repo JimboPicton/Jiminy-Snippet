@@ -10,6 +10,8 @@ if (!scriptMatch) {
 new Function(scriptMatch[1]);
 
 const checks = {
+  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.0.0">') && html.includes('const appVersion = "2.0.0"') && html.includes("v2.0.0 · 15 July 2026"),
+  "Build date metadata is consistent": html.includes('<meta name="build-date" content="2026-07-15">') && html.includes('const appBuildDate = "2026-07-15"'),
   "Purpose filter exists once": (html.match(/id="purposeFilter"/g) || []).length === 1,
   "Result list uses list semantics": html.includes('role="list"') && html.includes('role="listitem"'),
   "Legacy listbox semantics are absent": !html.includes('role="listbox"') && !html.includes('role="option"'),

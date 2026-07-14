@@ -2,6 +2,8 @@
 
 Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports reusable snippet collections, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
+Current release: **v2.0.0 — 15 July 2026**
+
 ## Canonical workspace
 
 This Git repository is the canonical project workspace:
@@ -52,7 +54,7 @@ The Date/Time dialog builds supported expressions. Units are `minutes`, `hours`,
 
 ## Backup format
 
-Backups are UTF-8 JSON and currently use state schema version `2`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
+Backups are UTF-8 JSON and include the application version, build date, and state schema version. The current state schema is version `2`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
 
 Keep a recent backup outside the project folder if the snippet library contains important working data.
 
