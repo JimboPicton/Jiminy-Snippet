@@ -94,6 +94,18 @@
       letter-spacing: 0;
     }
 
+    .field-group {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-group-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
     input,
     textarea,
     select {
@@ -232,6 +244,17 @@
       gap: 6px;
     }
 
+    .collection-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 30px;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .collection-entry:first-child .collection-btn {
+      grid-column: 1 / -1;
+    }
+
     .collection-btn {
       width: 100%;
       justify-content: space-between;
@@ -262,8 +285,8 @@
     }
 
     .collection-delete {
-      min-height: 24px;
-      width: 24px;
+      min-height: 30px;
+      width: 30px;
       padding: 0;
       border-color: transparent;
       background: transparent;
@@ -441,7 +464,7 @@
 
     .search-row {
       display: grid;
-      grid-template-columns: 1fr 150px;
+      grid-template-columns: minmax(0, 1fr) 150px 170px;
       gap: 8px;
     }
 
@@ -465,6 +488,17 @@
     .snippet-item.selected {
       border-color: var(--cqu-green);
       background: var(--cqu-mint);
+    }
+
+    .snippet-item.active-result {
+      outline: 3px solid rgba(0, 122, 83, 0.28);
+      outline-offset: 1px;
+    }
+
+    .search-hint {
+      margin: -4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
     }
 
     .snippet-top {
@@ -552,6 +586,11 @@
       outline-offset: 2px;
     }
 
+    .chip:focus-visible {
+      outline: 3px solid rgba(0, 122, 83, 0.35);
+      outline-offset: 2px;
+    }
+
     .chip button {
       min-height: 22px;
       width: 22px;
@@ -598,6 +637,62 @@
       border-radius: 8px;
       padding: 16px;
       text-align: center;
+    }
+
+    .validation-summary {
+      border: 1px solid #d99a94;
+      border-left: 4px solid var(--red);
+      border-radius: 6px;
+      background: #fff5f3;
+      color: #6f1f18;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    [aria-invalid="true"] {
+      border-color: var(--red);
+      box-shadow: 0 0 0 2px rgba(164, 48, 42, 0.12);
+    }
+
+    dialog {
+      width: min(460px, calc(100vw - 32px));
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      padding: 0;
+      box-shadow: 0 18px 60px rgba(16, 42, 31, 0.25);
+    }
+
+    dialog::backdrop {
+      background: rgba(9, 31, 23, 0.48);
+    }
+
+    .dialog-body {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .dialog-body h2,
+    .dialog-body p {
+      margin: 0;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     .hidden {
@@ -763,14 +858,24 @@
             <div class="search-row">
               <label>
                 Search
-                <input id="searchInput" type="search" placeholder="Abbreviation or comment">
+                <input id="searchInput" type="search" placeholder="Abbreviation or comment" autocomplete="off" aria-controls="snippetList" aria-describedby="searchHint">
               </label>
               <label>
                 Collection
                 <select id="categoryFilter"></select>
               </label>
+              <label>
+                Purpose
+                <select id="purposeFilter">
+                  <option value="">All purposes</option>
+                  <option value="General Text">General Text</option>
+                  <option value="Student Report Comment">Student Report Comment</option>
+                </select>
+              </label>
             </div>
-            <div id="snippetList" class="snippet-list" aria-live="polite"></div>
+            <p id="searchHint" class="search-hint">Use Up and Down to browse, Enter to select, and Escape to clear.</p>
+            <div id="snippetList" class="snippet-list" role="list" aria-label="Snippet search results"></div>
+            <p id="searchStatus" class="sr-only" role="status" aria-live="polite"></p>
           </div>
         </div>
 
@@ -787,27 +892,25 @@
               </label>
               <label>
                 Collection
-                <input id="categoryInput" required placeholder="Work Habits">
+                <input id="categoryInput" placeholder="Work Habits (defaults to General)">
               </label>
               <label class="span-2">
-                Content Type
+                Snippet Purpose
                 <select id="contentTypeInput">
-                  <option>Plain Text</option>
-                  <option>Student Report Comment</option>
+                  <option value="General Text">General Text</option>
+                  <option value="Student Report Comment">Student Report Comment</option>
                 </select>
               </label>
-              <div class="span-2">
-                <label>
-                  Insert Field
-                  <div class="field-toolbar" aria-label="Insert field into snippet">
-                    <button type="button" data-field="{name}">First Name</button>
-                    <button type="button" data-field="{fullname}">Full Name</button>
-                    <button type="button" data-field="{unit}">Unit</button>
-                    <button type="button" data-field="{assessment}">Assessment</button>
-                    <button type="button" data-field="{teachingStaff}">Teaching Staff</button>
-                    <button type="button" data-field="{date}">Date</button>
+              <div class="span-2 field-group">
+                  <span class="field-group-label">Insert Field</span>
+                  <div class="field-toolbar" role="group" aria-label="Insert field into snippet">
+                    <button type="button" data-field="{name}" title="Insert the student's first name">First Name</button>
+                    <button type="button" data-field="{fullname}" title="Insert the student's full name">Full Name</button>
+                    <button type="button" data-field="{unit}" title="Insert the unit">Unit</button>
+                    <button type="button" data-field="{assessment}" title="Insert the assessment">Assessment</button>
+                    <button type="button" data-field="{teachingStaff}" title="Insert the teaching staff name">Teaching Staff</button>
+                    <button type="button" id="dateMacroBtn" title="Build and insert a date or time field">Date/Time&hellip;</button>
                   </div>
-                </label>
               </div>
               <label class="span-2">
                 Expanded Comment
@@ -848,8 +951,10 @@
             </div>
             <label>
               Selected Abbreviations
-              <div id="selectedSnippets" class="selected-row"></div>
+              <div id="selectedSnippets" class="selected-row" aria-describedby="selectedHint"></div>
             </label>
+            <p id="selectedHint" class="search-hint">Drag to reorder, or focus a snippet and use Alt+Left or Alt+Right.</p>
+            <div id="validationSummary" class="validation-summary hidden" role="alert" tabindex="-1"></div>
             <div class="compose-actions">
               <button type="button" id="generateBtn" class="primary">Generate Report</button>
               <button type="button" id="copyBtn" title="Copy the full report">Copy Report</button>
@@ -861,16 +966,16 @@
               Rich Text Report
               <div class="rich-editor-shell">
                 <div class="rich-toolbar" aria-label="Report formatting tools">
-                  <button type="button" data-command="bold" title="Bold">B</button>
-                  <button type="button" data-command="italic" title="Italic"><em>I</em></button>
-                  <button type="button" data-command="underline" title="Underline"><u>U</u></button>
-                  <button type="button" data-command="insertUnorderedList" title="Bulleted list">List</button>
-                  <button type="button" data-command="justifyLeft" title="Align left">Left</button>
-                  <button type="button" data-command="justifyCenter" title="Align center">Centre</button>
-                  <button type="button" data-command="undo" title="Undo">Undo</button>
-                  <button type="button" data-command="redo" title="Redo">Redo</button>
+                  <button type="button" data-command="bold" title="Bold" aria-label="Bold" aria-pressed="false">B</button>
+                  <button type="button" data-command="italic" title="Italic" aria-label="Italic" aria-pressed="false"><em>I</em></button>
+                  <button type="button" data-command="underline" title="Underline" aria-label="Underline" aria-pressed="false"><u>U</u></button>
+                  <button type="button" data-command="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list" aria-pressed="false">List</button>
+                  <button type="button" data-command="justifyLeft" title="Align left" aria-label="Align left" aria-pressed="false">Left</button>
+                  <button type="button" data-command="justifyCenter" title="Align centre" aria-label="Align centre" aria-pressed="false">Centre</button>
+                  <button type="button" data-command="undo" title="Undo report edit" aria-label="Undo report edit">Undo</button>
+                  <button type="button" data-command="redo" title="Redo report edit" aria-label="Redo report edit">Redo</button>
                 </div>
-                <div id="reportText" class="report-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Select snippets, then generate a report."></div>
+                <div id="reportText" class="report-editor" contenteditable="true" role="textbox" aria-label="Rich text report" aria-multiline="true" data-placeholder="Select snippets, then generate a report."></div>
               </div>
             </label>
           </div>
@@ -889,6 +994,46 @@
   </div>
 
   <input id="importFile" class="hidden" type="file" accept="application/json">
+
+  <dialog id="dateMacroDialog" aria-labelledby="dateMacroTitle">
+    <form id="dateMacroForm" class="dialog-body" method="dialog">
+      <div>
+        <h2 id="dateMacroTitle">Insert Date/Time Field</h2>
+        <p class="subtle">Choose the output and an optional offset. The preview uses your browser locale.</p>
+      </div>
+      <div class="form-grid">
+        <label>
+          Output
+          <select id="dateMacroKind">
+            <option value="date">Date</option>
+            <option value="time">Time</option>
+            <option value="datetime">Date and time</option>
+          </select>
+        </label>
+        <label>
+          Offset
+          <input id="dateMacroAmount" type="number" required value="0" step="1" aria-describedby="dateMacroError">
+        </label>
+        <label class="span-2">
+          Offset unit
+          <select id="dateMacroUnit">
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
+            <option value="months">Months</option>
+            <option value="years">Years</option>
+            <option value="hours">Hours</option>
+            <option value="minutes">Minutes</option>
+          </select>
+        </label>
+      </div>
+      <p><strong>Preview:</strong> <span id="dateMacroPreview"></span></p>
+      <p id="dateMacroError" class="subtle" role="alert"></p>
+      <div class="dialog-actions">
+        <button type="button" id="dateMacroCancel">Cancel</button>
+        <button type="submit" class="primary">Insert Field</button>
+      </div>
+    </form>
+  </dialog>
 
   <script>
     function createId() {
@@ -944,8 +1089,10 @@
     ];
 
     const storageKey = "student-report-text-expander-v1";
+    const stateSchemaVersion = 2;
 
     const state = {
+      schemaVersion: stateSchemaVersion,
       snippets: [],
       selectedIds: [],
       details: {
@@ -967,7 +1114,9 @@
       snippetList: document.querySelector("#snippetList"),
       selectedSnippets: document.querySelector("#selectedSnippets"),
       categoryFilter: document.querySelector("#categoryFilter"),
+      purposeFilter: document.querySelector("#purposeFilter"),
       searchInput: document.querySelector("#searchInput"),
+      searchStatus: document.querySelector("#searchStatus"),
       snippetForm: document.querySelector("#snippetForm"),
       snippetFormTitle: document.querySelector("#snippetFormTitle"),
       snippetId: document.querySelector("#snippetId"),
@@ -997,16 +1146,38 @@
       saveReportBtn: document.querySelector("#saveReportBtn"),
       saveTextBtn: document.querySelector("#saveTextBtn"),
       clearReportBtn: document.querySelector("#clearReportBtn"),
+      validationSummary: document.querySelector("#validationSummary"),
       reportText: document.querySelector("#reportText"),
       printPreview: document.querySelector("#printPreview"),
       printBtn: document.querySelector("#printBtn"),
       exportBtn: document.querySelector("#exportBtn"),
       importBtn: document.querySelector("#importBtn"),
       importFile: document.querySelector("#importFile"),
-      resetBtn: document.querySelector("#resetBtn")
+      resetBtn: document.querySelector("#resetBtn"),
+      dateMacroBtn: document.querySelector("#dateMacroBtn"),
+      dateMacroDialog: document.querySelector("#dateMacroDialog"),
+      dateMacroForm: document.querySelector("#dateMacroForm"),
+      dateMacroKind: document.querySelector("#dateMacroKind"),
+      dateMacroAmount: document.querySelector("#dateMacroAmount"),
+      dateMacroUnit: document.querySelector("#dateMacroUnit"),
+      dateMacroPreview: document.querySelector("#dateMacroPreview"),
+      dateMacroError: document.querySelector("#dateMacroError"),
+      dateMacroCancel: document.querySelector("#dateMacroCancel")
     };
 
     let savedReportRange = null;
+    let activeSearchIndex = 0;
+
+    const detailFields = {
+      name: { input: "studentInput", label: "Student" },
+      fullname: { input: "studentInput", label: "Student" },
+      student: { input: "studentInput", label: "Student" },
+      unit: { input: "subjectInput", label: "Unit" },
+      subject: { input: "subjectInput", label: "Unit" },
+      assessment: { input: "assessmentInput", label: "Assessment" },
+      teachingStaff: { input: "teacherInput", label: "Teaching Staff" },
+      teacher: { input: "teacherInput", label: "Teaching Staff" }
+    };
 
     function loadState() {
       const saved = localStorage.getItem(storageKey);
@@ -1018,7 +1189,15 @@
 
       try {
         const data = JSON.parse(saved);
-        state.snippets = Array.isArray(data.snippets) ? data.snippets : [...starterSnippets];
+        state.schemaVersion = stateSchemaVersion;
+        state.snippets = Array.isArray(data.snippets)
+          ? data.snippets.map(snippet => ({
+              ...snippet,
+              contentType: snippet.contentType === "Plain Text" ? "General Text" : (snippet.contentType || "General Text"),
+              useCount: Number.isFinite(snippet.useCount) ? snippet.useCount : 0,
+              lastUsedAt: Number.isFinite(snippet.lastUsedAt) ? snippet.lastUsedAt : 0
+            }))
+          : [...starterSnippets];
         state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
         state.details = { ...state.details, ...(data.details || {}) };
         state.storedDetails = {
@@ -1059,8 +1238,12 @@
     function sanitizeReportHtml(html) {
       const template = document.createElement("template");
       template.innerHTML = html;
-      template.content.querySelectorAll("script, style, iframe, object, embed").forEach(node => node.remove());
-      template.content.querySelectorAll("*").forEach(node => {
+      const allowedTags = new Set(["A", "B", "BR", "DIV", "EM", "I", "LI", "OL", "P", "SPAN", "STRONG", "U", "UL"]);
+      [...template.content.querySelectorAll("*")].forEach(node => {
+        if (!allowedTags.has(node.tagName)) {
+          node.replaceWith(...node.childNodes);
+          return;
+        }
         [...node.attributes].forEach(attribute => {
           if (attribute.name === "style") {
             const allowedStyles = [];
@@ -1077,10 +1260,19 @@
               return;
             }
           }
-          if (!["href", "target"].includes(attribute.name)) {
+          if (node.tagName !== "A" || !["href", "target"].includes(attribute.name)) {
             node.removeAttribute(attribute.name);
           }
         });
+        if (node.tagName === "A") {
+          const href = node.getAttribute("href") || "";
+          if (!/^(https?:|mailto:)/i.test(href)) node.removeAttribute("href");
+          if (node.getAttribute("target") === "_blank") {
+            node.setAttribute("rel", "noopener noreferrer");
+          } else {
+            node.removeAttribute("target");
+          }
+        }
       });
       return template.innerHTML;
     }
@@ -1127,19 +1319,25 @@
       const categories = getCategories();
       const total = state.snippets.length;
       const active = els.categoryFilter.value;
+      const categoryCounts = state.snippets.reduce((counts, snippet) => {
+        counts.set(snippet.category, (counts.get(snippet.category) || 0) + 1);
+        return counts;
+      }, new Map());
       const collectionButtons = [
-        `<button type="button" class="collection-btn ${active ? "" : "active"}" data-collection="">
-          <span class="collection-name">All Snippets</span><span class="collection-count">${total}</span>
-        </button>`,
+        `<div class="collection-entry">
+          <button type="button" class="collection-btn ${active ? "" : "active"}" data-collection="" aria-label="Show all snippets">
+            <span class="collection-name">All Snippets</span><span class="collection-count">${total}</span>
+          </button>
+        </div>`,
         ...categories.map(category => {
-          const count = state.snippets.filter(snippet => snippet.category === category).length;
-          return `<button type="button" class="collection-btn ${active === category ? "active" : ""}" data-collection="${escapeHtml(category)}">
-            <span class="collection-name">${escapeHtml(category)}</span>
-            <span class="collection-meta">
+          const count = categoryCounts.get(category) || 0;
+          return `<div class="collection-entry">
+            <button type="button" class="collection-btn ${active === category ? "active" : ""}" data-collection="${escapeHtml(category)}" aria-label="Show ${escapeHtml(category)} collection, ${count} snippet${count === 1 ? "" : "s"}">
+              <span class="collection-name">${escapeHtml(category)}</span>
               <span class="collection-count">${count}</span>
-              <span class="collection-delete" role="button" tabindex="0" data-delete-collection="${escapeHtml(category)}" title="Delete ${escapeHtml(category)}">x</span>
-            </span>
-          </button>`;
+            </button>
+            <button type="button" class="collection-delete" data-delete-collection="${escapeHtml(category)}" title="Delete ${escapeHtml(category)} collection" aria-label="Delete ${escapeHtml(category)} collection">&times;</button>
+          </div>`;
         })
       ];
       els.collectionList.innerHTML = collectionButtons.join("");
@@ -1149,39 +1347,48 @@
     function filteredSnippets() {
       const query = els.searchInput.value.trim().toLowerCase();
       const category = els.categoryFilter.value;
-      return state.snippets
+      const purpose = els.purposeFilter.value;
+      const snippets = state.snippets
         .filter(snippet => !category || snippet.category === category)
+        .filter(snippet => !purpose || snippet.contentType === purpose)
         .filter(snippet => {
           if (!query) return true;
           return `${snippet.keyword} ${snippet.category} ${snippet.text}`.toLowerCase().includes(query);
-        })
-        .sort((a, b) => a.keyword.localeCompare(b.keyword));
+        });
+      return snippets.sort((a, b) => query
+        ? a.keyword.localeCompare(b.keyword)
+        : (b.lastUsedAt || 0) - (a.lastUsedAt || 0) || a.keyword.localeCompare(b.keyword));
     }
 
     function renderSnippets() {
-      renderCategoryFilter();
-      renderCollections();
       const snippets = filteredSnippets();
+      activeSearchIndex = Math.max(0, Math.min(activeSearchIndex, snippets.length - 1));
+      els.searchStatus.textContent = `${snippets.length} snippet${snippets.length === 1 ? "" : "s"} available.`;
 
       if (!snippets.length) {
         els.snippetList.innerHTML = '<div class="empty">No snippets match the current filter.</div>';
         return;
       }
 
-      els.snippetList.innerHTML = snippets.map(snippet => {
+      els.snippetList.innerHTML = snippets.map((snippet, index) => {
         const selected = state.selectedIds.includes(snippet.id);
+        const safeId = escapeHtml(snippet.id);
+        const resultId = `snippet-result-${index}`;
         return `
-          <div class="snippet-item ${selected ? "selected" : ""}">
+          <div id="${resultId}" class="snippet-item ${selected ? "selected" : ""} ${index === activeSearchIndex ? "active-result" : ""}" role="listitem" data-result-id="${safeId}">
             <div class="snippet-top">
               <div class="keyword">${escapeHtml(snippet.keyword)}</div>
-              <div class="abbr-pill">${escapeHtml(snippet.category)}</div>
+              <div>
+                <span class="abbr-pill">${escapeHtml(snippet.category)}</span>
+                <span class="abbr-pill">${escapeHtml(snippet.contentType || "General Text")}</span>
+              </div>
             </div>
             <div class="category">Abbreviation: ${escapeHtml(snippet.keyword)}</div>
             <div class="snippet-text">${escapeHtml(snippet.text)}</div>
             <div class="mini-actions">
-              <button type="button" data-action="toggle" data-id="${snippet.id}">${selected ? "Remove" : "Select"}</button>
-              <button type="button" data-action="edit" data-id="${snippet.id}">Edit</button>
-              <button type="button" data-action="delete" data-id="${snippet.id}" class="danger">Delete</button>
+              <button type="button" data-action="toggle" data-id="${safeId}">${selected ? "Remove" : "Select"}</button>
+              <button type="button" data-action="edit" data-id="${safeId}" aria-label="Edit ${escapeHtml(snippet.keyword || "untitled snippet")}">Edit</button>
+              <button type="button" data-action="delete" data-id="${safeId}" class="danger" aria-label="Delete ${escapeHtml(snippet.keyword || "untitled snippet")}">Delete</button>
             </div>
           </div>
         `;
@@ -1199,9 +1406,9 @@
       }
 
       els.selectedSnippets.innerHTML = selected.map(snippet => `
-        <span class="chip" draggable="true" data-selected-id="${snippet.id}" title="Drag to reorder">
+        <span class="chip" draggable="true" tabindex="0" data-selected-id="${escapeHtml(snippet.id)}" aria-label="${escapeHtml(snippet.keyword)}, selected snippet. Use Alt plus Left or Right to reorder." title="Drag to reorder; Alt+Left or Alt+Right also works">
           ${escapeHtml(snippet.keyword)}
-          <button type="button" title="Remove ${escapeHtml(snippet.keyword)}" data-remove="${snippet.id}">x</button>
+          <button type="button" title="Remove ${escapeHtml(snippet.keyword)}" aria-label="Remove ${escapeHtml(snippet.keyword)}" data-remove="${escapeHtml(snippet.id)}">&times;</button>
         </span>
       `).join("");
     }
@@ -1338,6 +1545,8 @@
     }
 
     function renderAll() {
+      renderCategoryFilter();
+      renderCollections();
       renderSnippets();
       renderSelected();
       renderDetails();
@@ -1356,11 +1565,11 @@
     function editSnippet(id) {
       const snippet = state.snippets.find(item => item.id === id);
       if (!snippet) return;
-      els.snippetFormTitle.textContent = `Snippet: ${snippet.keyword}`;
+      els.snippetFormTitle.textContent = `Snippet: ${snippet.keyword || "(Untitled)"}`;
       els.snippetId.value = snippet.id;
       els.keywordInput.value = snippet.keyword;
       els.categoryInput.value = snippet.category;
-      els.contentTypeInput.value = snippet.contentType || "Plain Text";
+      els.contentTypeInput.value = snippet.contentType === "Plain Text" ? "General Text" : (snippet.contentType || "General Text");
       els.textInput.value = snippet.text;
       els.keywordInput.focus();
     }
@@ -1370,6 +1579,11 @@
         state.selectedIds = state.selectedIds.filter(selectedId => selectedId !== id);
       } else {
         state.selectedIds.push(id);
+        const snippet = state.snippets.find(item => item.id === id);
+        if (snippet) {
+          snippet.useCount = (snippet.useCount || 0) + 1;
+          snippet.lastUsedAt = Date.now();
+        }
       }
       saveState();
       renderSnippets();
@@ -1388,6 +1602,19 @@
       renderSnippets();
     }
 
+    function moveSelectedSnippet(id, offset) {
+      const currentIndex = state.selectedIds.indexOf(id);
+      const nextIndex = currentIndex + offset;
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= state.selectedIds.length) return;
+      const nextIds = [...state.selectedIds];
+      [nextIds[currentIndex], nextIds[nextIndex]] = [nextIds[nextIndex], nextIds[currentIndex]];
+      state.selectedIds = nextIds;
+      saveState();
+      renderSelected();
+      renderSnippets();
+      els.selectedSnippets.querySelector(`[data-selected-id="${CSS.escape(id)}"]`)?.focus();
+    }
+
     function deleteSnippet(id) {
       const snippet = state.snippets.find(item => item.id === id);
       if (!snippet || !confirm(`Delete snippet "${snippet.keyword}"?`)) return;
@@ -1396,6 +1623,7 @@
       saveState();
       resetSnippetForm();
       renderAll();
+      els.searchInput.focus();
     }
 
     function deleteCollection(name) {
@@ -1414,14 +1642,73 @@
       renderAll();
     }
 
+    function macroNames(text) {
+      return [...String(text || "").matchAll(/\{([^{}]+)\}/g)].map(match => match[1]);
+    }
+
+    function isDateTimeMacro(name) {
+      return /^(date|time|datetime)(?::-?\d+:(days|weeks|months|years|hours|minutes))?$/.test(name);
+    }
+
+    function validateSelectedSnippets(selected) {
+      Object.values(detailFields).forEach(config => els[config.input].removeAttribute("aria-invalid"));
+      const messages = [];
+      const requiredInputs = [];
+      const names = selected.flatMap(snippet => macroNames(snippet.text));
+      const unknown = [...new Set(names.filter(name => !detailFields[name] && !isDateTimeMacro(name)))];
+
+      if (!selected.length) messages.push("Select at least one snippet before generating a report.");
+      if (unknown.length) messages.push(`Unknown field${unknown.length === 1 ? "" : "s"}: ${unknown.map(name => `{${name}}`).join(", ")}.`);
+
+      const usedDetails = [...new Set(names.filter(name => detailFields[name]).map(name => detailFields[name].input))];
+      usedDetails.forEach(inputName => {
+        const input = els[inputName];
+        if (input.value.trim()) return;
+        input.setAttribute("aria-invalid", "true");
+        requiredInputs.push(input);
+        const config = Object.values(detailFields).find(item => item.input === inputName);
+        messages.push(`${config.label} is required by a selected snippet.`);
+      });
+
+      els.validationSummary.textContent = messages.join(" ");
+      els.validationSummary.classList.toggle("hidden", !messages.length);
+      if (messages.length) {
+        (requiredInputs[0] || els.searchInput).focus();
+        return false;
+      }
+      return true;
+    }
+
     function generateReport() {
       const selected = state.selectedIds
         .map(id => state.snippets.find(snippet => snippet.id === id))
         .filter(Boolean);
 
+      syncDetailsFromInputs();
+      if (!validateSelectedSnippets(selected)) return;
+
       const comments = selected.map(snippet => expandFields(snippet.text));
       els.reportText.innerHTML = paragraphsToHtml(comments.filter(Boolean).join("\n\n"));
       syncDetailsFromInputs();
+    }
+
+    function applyDateOffset(kind, amount, unit) {
+      const value = new Date();
+      const offset = Number(amount) || 0;
+      if (unit === "minutes") value.setMinutes(value.getMinutes() + offset);
+      if (unit === "hours") value.setHours(value.getHours() + offset);
+      if (unit === "days") value.setDate(value.getDate() + offset);
+      if (unit === "weeks") value.setDate(value.getDate() + (offset * 7));
+      if (unit === "months") value.setMonth(value.getMonth() + offset);
+      if (unit === "years") value.setFullYear(value.getFullYear() + offset);
+      if (kind === "time") return value.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      if (kind === "datetime") return value.toLocaleString([], { dateStyle: "short", timeStyle: "short" });
+      return value.toLocaleDateString();
+    }
+
+    function expandDateTimeMacros(text) {
+      return text.replace(/\{(date|time|datetime)(?::(-?\d+):(days|weeks|months|years|hours|minutes))?\}/g,
+        (match, kind, amount = "0", unit = "days") => applyDateOffset(kind, amount, unit));
     }
 
     function expandFields(text) {
@@ -1438,10 +1725,28 @@
         "{teacher}": details.teacher || "",
         "{date}": new Date().toLocaleDateString()
       };
-      return Object.entries(fields).reduce(
+      const expanded = Object.entries(fields).reduce(
         (result, [field, value]) => result.replaceAll(field, value),
         text
       );
+      return expandDateTimeMacros(expanded);
+    }
+
+    function dateMacroText() {
+      const amount = els.dateMacroAmount.value;
+      if (amount === "" || !Number.isFinite(Number(amount))) return "";
+      const kind = els.dateMacroKind.value;
+      const unit = els.dateMacroUnit.value;
+      return Number(amount) === 0 ? `{${kind}}` : `{${kind}:${Number(amount)}:${unit}}`;
+    }
+
+    function updateDateMacroPreview() {
+      const macro = dateMacroText();
+      const valid = Boolean(macro);
+      els.dateMacroAmount.setCustomValidity(valid ? "" : "Enter a numeric offset, using 0 for the current date or time.");
+      els.dateMacroError.textContent = valid ? "" : "Offset is required. Enter 0 when no offset is needed.";
+      els.dateMacroPreview.textContent = valid ? expandDateTimeMacros(macro) : "Not available";
+      return valid;
     }
 
     function insertField(field) {
@@ -1464,6 +1769,22 @@
       const selection = window.getSelection();
       if (!selection || !selection.rangeCount || !selectionIsInsideReport()) return;
       savedReportRange = selection.getRangeAt(0).cloneRange();
+      updateReportToolbar();
+    }
+
+    function updateReportToolbar() {
+      const statefulCommands = new Set(["bold", "italic", "underline", "insertUnorderedList", "justifyLeft", "justifyCenter"]);
+      document.querySelectorAll("[data-command]").forEach(button => {
+        if (!statefulCommands.has(button.dataset.command)) return;
+        let active = false;
+        try {
+          active = document.queryCommandState(button.dataset.command);
+        } catch {
+          active = false;
+        }
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
     }
 
     function restoreReportSelection() {
@@ -1572,29 +1893,51 @@
     }
 
     function importData(file) {
+      if (!file || file.size > 2 * 1024 * 1024) {
+        alert("That backup is too large. Please choose a JSON export smaller than 2 MB.");
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         try {
           const data = JSON.parse(reader.result);
-          if (!Array.isArray(data.snippets)) throw new Error("Missing snippets");
-          state.snippets = data.snippets.map(snippet => ({
-            id: snippet.id || createId(),
-            keyword: snippet.keyword || "",
-            category: snippet.category || "General",
-            contentType: snippet.contentType || "Plain Text",
-            text: snippet.text || ""
-          }));
-          state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
-          state.details = { ...state.details, ...(data.details || {}) };
+          if (!Array.isArray(data.snippets) || data.snippets.length > 5000) throw new Error("Invalid snippets");
+          const cleanString = (value, maxLength) => String(value || "").slice(0, maxLength);
+          const idMap = new Map();
+          state.snippets = data.snippets.map(snippet => {
+            if (!snippet || typeof snippet !== "object") throw new Error("Invalid snippet");
+            const id = createId();
+            idMap.set(String(snippet.id || ""), id);
+            return {
+              id,
+              keyword: cleanString(snippet.keyword, 120),
+              category: cleanString(snippet.category, 120) || "General",
+              contentType: snippet.contentType === "Student Report Comment" ? "Student Report Comment" : "General Text",
+              text: cleanString(snippet.text, 20000),
+              useCount: Math.max(0, Number(snippet.useCount) || 0),
+              lastUsedAt: Math.max(0, Number(snippet.lastUsedAt) || 0)
+            };
+          });
+          state.selectedIds = Array.isArray(data.selectedIds)
+            ? data.selectedIds.map(id => idMap.get(String(id))).filter(Boolean)
+            : [];
+          const importedDetails = data.details && typeof data.details === "object" ? data.details : {};
+          state.details = {
+            student: cleanString(importedDetails.student, 500),
+            subject: cleanString(importedDetails.subject, 500),
+            assessment: cleanString(importedDetails.assessment, 500),
+            teacher: cleanString(importedDetails.teacher, 500)
+          };
           state.storedDetails = {
-            ...state.storedDetails,
-            ...(data.storedDetails || {})
+            units: Array.isArray(data.storedDetails?.units) ? data.storedDetails.units.slice(0, 500).map(value => cleanString(value, 500)) : [],
+            assessments: Array.isArray(data.storedDetails?.assessments) ? data.storedDetails.assessments.slice(0, 500).map(value => cleanString(value, 500)) : [],
+            teachingStaff: Array.isArray(data.storedDetails?.teachingStaff) ? data.storedDetails.teachingStaff.slice(0, 500).map(value => cleanString(value, 500)) : []
           };
           state.collapsedPanels = {
             ...state.collapsedPanels,
             ...(data.collapsedPanels || {})
           };
-          state.reportText = data.reportText || "";
+          state.reportText = sanitizeReportHtml(cleanString(data.reportText, 100000));
           saveState();
           renderAll();
         } catch {
@@ -1619,7 +1962,7 @@
 
       const existingIndex = state.snippets.findIndex(item => item.id === id);
       if (existingIndex >= 0) {
-        state.snippets[existingIndex] = snippet;
+        state.snippets[existingIndex] = { ...state.snippets[existingIndex], ...snippet };
       } else {
         state.snippets.push(snippet);
       }
@@ -1650,14 +1993,8 @@
       const button = event.target.closest("button[data-collection]");
       if (!button) return;
       els.categoryFilter.value = button.dataset.collection;
+      renderCollections();
       renderSnippets();
-    });
-
-    els.collectionList.addEventListener("keydown", event => {
-      const deleteControl = event.target.closest("[data-delete-collection]");
-      if (!deleteControl || !["Enter", " "].includes(event.key)) return;
-      event.preventDefault();
-      deleteCollection(deleteControl.dataset.deleteCollection);
     });
 
     document.querySelectorAll("[data-field]").forEach(button => {
@@ -1672,6 +2009,13 @@
       const button = event.target.closest("button[data-remove]");
       if (!button) return;
       toggleSnippet(button.dataset.remove);
+    });
+
+    els.selectedSnippets.addEventListener("keydown", event => {
+      const chip = event.target.closest(".chip[data-selected-id]");
+      if (!chip || !event.altKey || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      moveSelectedSnippet(chip.dataset.selectedId, event.key === "ArrowLeft" ? -1 : 1);
     });
 
     els.selectedSnippets.addEventListener("dragstart", event => {
@@ -1747,13 +2091,59 @@
       removeStoredDetail(button.dataset.storeRemove, button.dataset.value);
     });
 
-    [els.searchInput, els.categoryFilter].forEach(input => {
-      input.addEventListener("input", renderSnippets);
-      input.addEventListener("change", renderSnippets);
+    els.searchInput.addEventListener("input", () => {
+      activeSearchIndex = 0;
+      renderSnippets();
+    });
+
+    els.searchInput.addEventListener("keydown", event => {
+      const snippets = filteredSnippets();
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        if (event.key === "ArrowDown") activeSearchIndex = Math.min(activeSearchIndex + 1, snippets.length - 1);
+        if (event.key === "ArrowUp") activeSearchIndex = Math.max(activeSearchIndex - 1, 0);
+        if (event.key === "Home") activeSearchIndex = 0;
+        if (event.key === "End") activeSearchIndex = Math.max(0, snippets.length - 1);
+        renderSnippets();
+        const activeSnippet = snippets[activeSearchIndex];
+        if (activeSnippet) {
+          const selected = state.selectedIds.includes(activeSnippet.id) ? "selected" : "not selected";
+          els.searchStatus.textContent = `${activeSnippet.keyword}, ${activeSearchIndex + 1} of ${snippets.length}, ${selected}.`;
+        }
+        document.querySelector(".snippet-item.active-result")?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (event.key === "Enter" && snippets[activeSearchIndex]) {
+        event.preventDefault();
+        const snippet = snippets[activeSearchIndex];
+        if (!state.selectedIds.includes(snippet.id)) toggleSnippet(snippet.id);
+        els.searchStatus.textContent = `${snippet.keyword} selected.`;
+      }
+      if (event.key === "Escape" && els.searchInput.value) {
+        event.preventDefault();
+        els.searchInput.value = "";
+        activeSearchIndex = 0;
+        renderSnippets();
+      }
+    });
+
+    els.categoryFilter.addEventListener("change", () => {
+      activeSearchIndex = 0;
+      renderCollections();
+      renderSnippets();
+    });
+
+    els.purposeFilter.addEventListener("change", () => {
+      activeSearchIndex = 0;
+      renderSnippets();
     });
 
     [els.studentInput, els.subjectInput, els.assessmentInput, els.teacherInput, els.reportText].forEach(input => {
-      input.addEventListener("input", syncDetailsFromInputs);
+      input.addEventListener("input", () => {
+        input.removeAttribute("aria-invalid");
+        els.validationSummary.classList.add("hidden");
+        syncDetailsFromInputs();
+      });
     });
 
     els.reportText.addEventListener("keyup", saveReportSelection);
@@ -1769,6 +2159,23 @@
     });
 
     els.generateBtn.addEventListener("click", generateReport);
+    els.dateMacroBtn.addEventListener("click", () => {
+      els.dateMacroAmount.value = "0";
+      updateDateMacroPreview();
+      els.dateMacroDialog.showModal();
+      els.dateMacroKind.focus();
+    });
+    [els.dateMacroKind, els.dateMacroAmount, els.dateMacroUnit].forEach(input => {
+      input.addEventListener("input", updateDateMacroPreview);
+      input.addEventListener("change", updateDateMacroPreview);
+    });
+    els.dateMacroCancel.addEventListener("click", () => els.dateMacroDialog.close());
+    els.dateMacroForm.addEventListener("submit", event => {
+      event.preventDefault();
+      if (!updateDateMacroPreview() || !els.dateMacroForm.reportValidity()) return;
+      insertField(dateMacroText());
+      els.dateMacroDialog.close();
+    });
     els.cancelEditBtn.addEventListener("click", resetSnippetForm);
     els.newSnippetBtn.addEventListener("click", resetSnippetForm);
     els.clearReportBtn.addEventListener("click", () => {
@@ -1781,30 +2188,40 @@
     els.copyBtn.addEventListener("click", async () => {
       const plain = reportPlainText();
       const html = sanitizeReportHtml(reportHtml());
-      if (navigator.clipboard && window.isSecureContext) {
-        if (window.ClipboardItem) {
-          await navigator.clipboard.write([
-            new ClipboardItem({
-              "text/plain": new Blob([plain], { type: "text/plain" }),
-              "text/html": new Blob([html], { type: "text/html" })
-            })
-          ]);
+      els.copyBtn.disabled = true;
+      els.copyBtn.setAttribute("aria-busy", "true");
+      els.copyBtn.textContent = "Copying…";
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          if (window.ClipboardItem) {
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                "text/plain": new Blob([plain], { type: "text/plain" }),
+                "text/html": new Blob([html], { type: "text/html" })
+              })
+            ]);
+          } else {
+            await navigator.clipboard.writeText(plain);
+          }
         } else {
-          await navigator.clipboard.writeText(plain);
+          const range = document.createRange();
+          range.selectNodeContents(els.reportText);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          document.execCommand("copy");
+          selection.removeAllRanges();
         }
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(els.reportText);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand("copy");
-        selection.removeAllRanges();
+        els.copyBtn.textContent = "Copied";
+      } catch {
+        els.copyBtn.textContent = "Copy failed";
+      } finally {
+        setTimeout(() => {
+          els.copyBtn.disabled = false;
+          els.copyBtn.removeAttribute("aria-busy");
+          els.copyBtn.textContent = "Copy Report";
+        }, 1200);
       }
-      els.copyBtn.textContent = "Copied";
-      setTimeout(() => {
-        els.copyBtn.textContent = "Copy Report";
-      }, 1200);
     });
     els.exportBtn.addEventListener("click", exportData);
     els.importBtn.addEventListener("click", () => els.importFile.click());

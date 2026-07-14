@@ -1,6 +1,6 @@
 # Jiminy Snippet User Guide
 
-Jiminy Snippet helps you build student assessment reports from reusable snippets. You create short abbreviations, attach them to report comments, select the comments you need, and generate a formatted report.
+Jiminy Snippet helps you build student assessment reports from reusable snippets. You create short abbreviations, attach them to report comments, select the comments you need, and generate a formatted report. General-purpose text snippets can also be stored alongside student report comments.
 
 ## 1. Open The App
 
@@ -49,8 +49,8 @@ Use the menu button in the **Collections** or **Stored Report Details** header t
    Example: `timing`
 3. Enter a **Collection**.
    Example: `Work Habits`
-4. Choose a **Content Type**.
-   For most assessment reports, use **Student Report Comment**.
+4. Choose a **Snippet Purpose**.
+   For most assessment reports, use **Student Report Comment**. Use **General Text** for reusable text that is not specifically a student report comment. The Purpose filter can show either type in the library.
 5. Write the expanded comment.
    Example: `Please look at your timing and aim to pace your responses more evenly.`
 6. Select **Save Snippet**.
@@ -71,6 +71,8 @@ Available fields:
 - `{assessment}`
 - `{teachingStaff}`
 - `{date}`
+- `{time}`
+- `{datetime}`
 
 `{name}` uses the first part of the Student field. For example, `john smith` becomes `John`.
 
@@ -90,14 +92,19 @@ John demonstrated excellent effort in ENG101 and should continue applying feedba
 
 Use the **Insert Field** buttons to add fields into a snippet without typing them manually.
 
+Use **Date/Time…** to build date and time fields with an optional offset. Examples include `{date:7:days}`, `{date:-2:weeks}`, and `{datetime:90:minutes}`. An offset of `0` inserts the current date or time. Supported units are minutes, hours, days, weeks, months, and years.
+
+Before a report is generated, Jiminy Snippet identifies unknown fields and any report information required by the selected snippets. Correct the highlighted fields, then generate again.
+
 ## 6. Select Snippets For A Report
 
-1. Browse **My Snippets**, or use search.
-2. Use the **Collections** panel to filter by collection.
-3. Select **Select** on each snippet you want to include.
-4. Selected snippets appear under **Selected Abbreviations**.
-5. Drag selected abbreviations left or right to change the report sequence.
-6. Select the `x` on a selected abbreviation to remove it.
+1. Browse **My Snippets**, or use Search, Collection, and Purpose filters. With an empty search, the most recently used snippets appear first.
+2. In Search, use **Up** and **Down** to browse results, **Enter** to select the active result, and **Escape** to clear the query.
+3. Use the **Collections** panel to filter by collection.
+4. Select **Select** on each snippet you want to include.
+5. Selected snippets appear under **Selected Abbreviations**.
+6. Drag selected abbreviations left or right to change the report sequence, or focus one and use **Alt+Left** or **Alt+Right**.
+7. Select the `x` on a selected abbreviation to remove it.
 
 ## 7. Generate A Report
 
@@ -148,6 +155,8 @@ Use these options in the top toolbar:
 - **Reset**: Restores the starter snippet library. This replaces your current snippets.
 
 Backups also include saved Units, Assessment items, and Teaching Staff. Keep backup files somewhere safe if you plan to use Jiminy Snippet across different computers or browsers.
+
+The current backup state schema is version 2. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
 
 ## 11. Suggested Workflow
 
