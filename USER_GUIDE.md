@@ -16,11 +16,11 @@ The app has two main working areas and a Configuration menu:
 
 - **My Snippets**: Reusable feedback fields. Each snippet has an abbreviation, default feedback, and optional feedback choices.
 - **Report Details and Template**: Report-level details, the report template, selected snippet feedback fields, generated rich text, preview, print, and save options.
-- **Configuration**: Opens floating panels for Collections and Stored Report Details. Each panel can be expanded, restored, or closed.
+- **Configuration**: Opens floating panels for Categories and Stored Report Details. Each panel can be expanded, restored, or closed.
 
 ## 3. Add Report Details
 
-In **Report Details and Template**, enter:
+In **Report Details and Template**, choose the **Unit first**. Jiminy Snippet then loads the categories and snippets relevant to that Unit. Enter the remaining details afterward:
 
 - **Student**: The student name.
 - **Unit**: The unit name or code.
@@ -47,21 +47,24 @@ Use **Expand** to enlarge the floating panel, **Restore** to return it to its no
 
 ## 4. Create A New Snippet
 
-1. Select **New** in the **My Snippets** panel.
+1. Select **New** in the **My Snippets** panel. The floating snippet editor opens only when needed.
 2. Enter an **Abbreviation**.
    Example: `timing`
-3. Choose a **Collection** from the dropdown. Select **Create new collection…** when a new collection is required.
-4. Choose a **Snippet Purpose**.
+3. Choose the **Unit** that owns the snippet. Older snippets without a Unit remain available as shared snippets.
+4. Choose a **Category** from the dropdown. Select **Create new category…** when a new category is required.
+5. Choose a **Snippet Purpose**.
    For most assessment reports, use **Student Report Comment**. Use **General Text** for reusable text that is not specifically a student report comment. The Purpose filter can show either type in the library.
-5. Add **Default Feedback**. This is the fallback when the snippet has no choices.
-6. Optionally select **Add Option** under **Feedback Options**. Each option appears as a checkbox-style row; enter a label such as **Too Fast** or **Too Slow**. Add as many options as the snippet requires.
+6. Add **Default Feedback**. This is the fallback when the snippet has no choices.
+7. Optionally select **Add Option** under **Feedback Options**. Each option appears as a checkbox-style row; enter a label such as **Too Fast** or **Too Slow**. Add as many options as the snippet requires.
 
    Default Feedback is optional when at least one feedback option is provided.
-7. Select **Save Snippet**.
+8. Select **Save Snippet**.
 
-After saving, Jiminy Snippet switches to the selected collection so you can confirm the snippet moved there.
+After saving, the snippet is available beneath its selected Unit and Category.
 
-To delete a collection, open **Configuration > Collections** and select the `x` beside the collection name. Snippets in that collection are kept and moved to `General`.
+Use **Expand** to enlarge the snippet editor, **Restore** to return it to its normal floating size, or **Close** without saving. Selecting **Edit** on an existing snippet opens the same floating editor.
+
+Open **Configuration > Categories** to add categories for a Unit, rename them, or delete them. Deleting a category keeps its snippets and moves them to `General` for that Unit.
 
 ## 5. Build A Report Template
 
@@ -115,9 +118,9 @@ Before a report is generated, Jiminy Snippet identifies unknown fields and any r
 
 ## 6. Select Snippets For A Report
 
-1. Browse **My Snippets**, or use Search, Collection, and Purpose filters. With an empty search, the most recently used snippets appear first.
+1. Choose the Unit in Report Details, then browse **My Snippets** using Search, Category, and Purpose filters. With an empty search, the most recently used relevant snippets appear first.
 2. In Search, use **Up** and **Down** to browse results, **Enter** to select the active result, and **Escape** to clear the query.
-3. Use the Collection dropdown above **My Snippets**, or open **Configuration > Collections** to filter by collection.
+3. Use the Category dropdown above **My Snippets**. Open **Configuration > Categories** to add or rename categories beneath each Unit.
 4. Place the cursor where the feedback belongs in the Report Template, then select **Add to Report** on the snippet. Its field is inserted immediately.
 5. Selected snippets appear under **Selected Snippet Fields** and **Snippet Feedback Fields**.
 6. Tick every applicable feedback value, such as **Too Fast** or **Too Slow**.
@@ -177,7 +180,7 @@ Use these options in the top toolbar:
 
 Backups also include saved Units, Assessment items, and Teaching Staff. Keep backup files somewhere safe if you plan to use Jiminy Snippet across different computers or browsers.
 
-The current backup state schema is version 4. Backups include the Report Template, snippet options, and selected feedback values/comments. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
+The current backup state schema is version 5. Backups include Unit/category assignments, the Report Template, snippet options, and selected feedback values/comments. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
 
 ## 11. Suggested Workflow
 
@@ -194,7 +197,7 @@ The current backup state schema is version 4. Backups include the Report Templat
 ## 12. Tips
 
 - Use short, memorable abbreviations such as `timing`, `evidence`, `proofread`, or `next-steps`.
-- Use collections to organise snippets by feedback type.
+- Use Unit-specific categories to organise snippets by feedback type.
 - Use `{name}` for a warmer personal tone, and `{fullname}` when the full student name is needed.
 - Use report-level fields for student, unit, assessment, teaching staff, and date information.
 - Use snippet fields for specific feedback points such as timing, evidence, or structure.

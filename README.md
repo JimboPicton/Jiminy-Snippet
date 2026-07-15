@@ -1,8 +1,8 @@
 # Jiminy Snippet
 
-Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports reusable snippet collections, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
+Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports Unit-based snippet categories, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
-Current release: **v2.4.0 — 15 July 2026**
+Current release: **v2.6.0 — 15 July 2026**
 
 ## Canonical workspace
 
@@ -24,9 +24,12 @@ The working library is stored in browser local storage under `student-report-tex
 
 ## Current capabilities
 
-- Snippet collections, text search, Purpose filtering, Recents ordering, and keyboard selection
-- Collection dropdowns in the snippet editor, with a Create New Collection option
-- A Configuration menu with floating, expandable Collections and Stored Report Details panels
+- Unit-first report workflow with relevant snippets and categories loaded after choosing a Unit
+- Category, text-search, Purpose, Recents, and keyboard filtering
+- Unit and Category dropdowns in the snippet editor, with a Create New Category option
+- A Configuration menu with floating, expandable Categories and Stored Report Details panels
+- Category creation, renaming, and deletion scoped to individual Units
+- A hidden-by-default floating snippet editor opened by New or Edit, with Expand/Restore and Close controls
 - General Text and Student Report Comment snippet purposes
 - Report templates with student, unit, assessment, teaching-staff, date, time, and date-math fields
 - Snippet-specific checkbox feedback, optional comments, and insertable fields such as `{timing}`
@@ -35,7 +38,7 @@ The working library is stored in browser local storage under `student-report-tex
 - Rich report editing, rich/plain clipboard copying, HTML export, and text export
 - Bounded JSON backup/import with regenerated internal IDs
 - Mouse and keyboard reordering of selected snippets
-- Accessible collection controls, result lists, validation messages, and formatting state
+- Accessible category controls, result lists, validation messages, and formatting state
 - Confirmed full report clearing and a separate popup print-preview window
 
 ## Report and snippet fields
@@ -63,9 +66,9 @@ Selecting **Add to Report** inserts `{timing}` at the template cursor automatica
 
 ## Backup format
 
-Backups are UTF-8 JSON and include the application version, build date, report template, snippet options, selected feedback values/comments, and state schema version. The current state schema is version `4`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
+Backups are UTF-8 JSON and include the application version, build date, Unit/category assignments, report template, snippet options, selected feedback values/comments, and state schema version. The current state schema is version `5`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
 
-Report templates, generated output, selected snippets, and feedback selections start blank on each page load. The reusable snippet library and stored report details remain saved.
+Report templates, generated output, selected snippets, and feedback selections start blank on each page load. The reusable Unit/category hierarchy, snippet library, and stored report details remain saved.
 
 Keep a recent backup outside the project folder if the snippet library contains important working data.
 
@@ -81,7 +84,7 @@ Keep a recent backup outside the project folder if the snippet library contains 
 1. Run `node verify-build.js`.
 2. Open the app in a clean browser profile and confirm the starter library loads.
 3. Import a current backup and earlier schema-1/schema-2 backups.
-4. Test search with Arrow keys, Enter, Escape, Collection, and Purpose filters.
+4. Choose a Unit, then test search with Arrow keys, Enter, Escape, Category, and Purpose filters.
 5. Confirm editing a recently used snippet preserves its Recents position.
 6. Define a snippet with multiple feedback options, add it to a report, tick multiple values, and enter optional comments.
 7. Validate required and unknown fields, including an empty Date/Time offset.
