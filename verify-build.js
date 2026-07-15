@@ -26,7 +26,7 @@ const timingSnippet = { id: "timingId", keyword: "Timing", text: "Review timing.
 const expandedTiming = helpers.expandSnippetFields("1. {timing}", [timingSnippet]);
 
 const checks = {
-  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.7.0">') && html.includes('const appVersion = "2.7.0"') && html.includes("v2.7.0 · 15 July 2026"),
+  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.8.0">') && html.includes('const appVersion = "2.8.0"') && html.includes("v2.8.0 · 15 July 2026"),
   "Build date metadata is consistent": html.includes('<meta name="build-date" content="2026-07-15">') && html.includes('const appBuildDate = "2026-07-15"'),
   "Purpose filter exists once": (html.match(/id="purposeFilter"/g) || []).length === 1,
   "Result list uses list semantics": html.includes('role="list"') && html.includes('role="listitem"'),
@@ -45,6 +45,9 @@ const checks = {
   "Vault uses authenticated AES-GCM encryption": html.includes('{ name: "AES-GCM" }') && html.includes("crypto.getRandomValues(new Uint8Array(12))") && html.includes("tagLength: 128") && html.includes("additionalData"),
   "Plaintext browser state is removed after migration": html.includes("localStorage.removeItem(storageKey)") && !html.includes("localStorage.setItem(storageKey"),
   "Security supports rate limits and automatic locking": html.includes("function recordFailedUnlock") && html.includes("const autoLockMilliseconds = 15 * 60 * 1000") && html.includes('id="lockBtn"') && html.includes("function lockApplication"),
+  "Recovery key is generated and shown once": html.includes("function generateRecoveryCode") && html.includes("crypto.getRandomValues(new Uint8Array(32))") && html.includes('id="recoveryKeyPanel"') && html.includes('id="continueAfterRecoveryBtn"'),
+  "Recovery uses separate authenticated key wrapping": html.includes("function createRecoveryEnvelope") && html.includes("jiminy-password-wrap-v2") && html.includes("jiminy-recovery-wrap-v2") && html.includes("function unwrapDataKey"),
+  "Recovery resets the password without changing vault data": html.includes("function rewrapPassword") && html.includes('showSecurityMode("reset")') && html.includes("recoveredDataKeyBytes"),
   "Configuration menu owns both management panels": html.includes('id="configMenuBtn"') && html.includes('data-open-config="collections"') && html.includes('data-open-config="storedDetails"') && !html.includes('class="sidebar-rail"'),
   "Configuration panels float, expand, and close": (html.match(/class="panel config-floating hidden"/g) || []).length === 2 && (html.match(/data-expand-config=/g) || []).length === 2 && (html.match(/data-close-config=/g) || []).length === 2 && html.includes("function openConfigPanel") && html.includes("function closeConfigPanel"),
   "Stored report details populate report dropdowns": html.includes('<select id="subjectInput">') && html.includes('<select id="assessmentInput">') && html.includes('<select id="teacherInput">') && html.includes("function renderReportDetailSelects"),
@@ -69,9 +72,10 @@ Object.entries(checks).forEach(([name, passed]) => {
 });
 
 async function verifyCryptography() {
-  const securitySource = ["deriveSecurityMaterial", "constantTimeEqual"].map(extractFunction).join("\n");
+  const securityNames = ["bytesToBase64", "base64ToBytes", "generateRecoveryCode", "normalizeRecoveryCode", "deriveSecurityMaterial", "importVaultKey", "wrapDataKey", "unwrapDataKey", "createRecoveryEnvelope", "rewrapPassword", "constantTimeEqual"];
+  const securitySource = securityNames.map(extractFunction).join("\n");
   const webcrypto = require("node:crypto").webcrypto;
-  const security = new Function("crypto", "TextEncoder", "pbkdf2Iterations", `${securitySource}\nreturn { deriveSecurityMaterial, constantTimeEqual };`)(webcrypto, TextEncoder, 1000);
+  const security = new Function("crypto", "TextEncoder", "pbkdf2Iterations", `${securitySource}\nreturn { ${securityNames.join(", ")} };`)(webcrypto, TextEncoder, 1000);
   const salt = new Uint8Array(16).fill(7);
   const correct = await security.deriveSecurityMaterial("correct horse battery staple", salt, 1000);
   const repeated = await security.deriveSecurityMaterial("correct horse battery staple", salt, 1000);
@@ -82,11 +86,22 @@ async function verifyCryptography() {
   const plaintext = new TextEncoder().encode("Jiminy Snippet encrypted vault test");
   const encrypted = await webcrypto.subtle.encrypt({ name: "AES-GCM", iv, tagLength: 128 }, correct.key, plaintext);
   const decrypted = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv, tagLength: 128 }, repeated.key, encrypted);
-  return new TextDecoder().decode(decrypted) === "Jiminy Snippet encrypted vault test";
+  if (new TextDecoder().decode(decrypted) !== "Jiminy Snippet encrypted vault test") return false;
+
+  const envelope = await security.createRecoveryEnvelope("original secure password");
+  const passwordMaterial = await security.deriveSecurityMaterial("original secure password", security.base64ToBytes(envelope.auth.passwordSalt), 1000);
+  const passwordUnwrapped = await security.unwrapDataKey(envelope.auth.passwordWrap, passwordMaterial.key, "jiminy-password-wrap-v2");
+  const recoveryMaterial = await security.deriveSecurityMaterial(security.normalizeRecoveryCode(envelope.recoveryCode), security.base64ToBytes(envelope.auth.recoverySalt), 1000);
+  const recoveryUnwrapped = await security.unwrapDataKey(envelope.auth.recoveryWrap, recoveryMaterial.key, "jiminy-recovery-wrap-v2");
+  if (!security.constantTimeEqual(passwordUnwrapped, recoveryUnwrapped)) return false;
+  const resetAuth = await security.rewrapPassword("replacement secure password", envelope.auth, recoveryUnwrapped);
+  const resetMaterial = await security.deriveSecurityMaterial("replacement secure password", security.base64ToBytes(resetAuth.passwordSalt), 1000);
+  const resetUnwrapped = await security.unwrapDataKey(resetAuth.passwordWrap, resetMaterial.key, "jiminy-password-wrap-v2");
+  return security.constantTimeEqual(recoveryUnwrapped, resetUnwrapped) && security.normalizeRecoveryCode(envelope.recoveryCode).length === 64;
 }
 
 verifyCryptography().then(cryptoPassed => {
-  console.log(`${cryptoPassed ? "PASS" : "FAIL"}: Password derivation and AES-GCM round trip`);
+  console.log(`${cryptoPassed ? "PASS" : "FAIL"}: Password, recovery, and AES-GCM round trip`);
   if (failures.length || !cryptoPassed) {
     process.exitCode = 1;
   } else {

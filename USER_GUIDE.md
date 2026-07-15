@@ -12,9 +12,13 @@ The app saves your reusable snippets and stored report details in the browser on
 
 ## Password Protection
 
-The first time the protected build opens, create a password of at least 12 characters. Jiminy Snippet uses that password to derive an encryption key; it does not store the password itself. Existing browser data is migrated into the encrypted vault during setup.
+The first time the protected build opens, create a password of at least 12 characters. Jiminy Snippet uses that password to unlock a separate data-encryption key; it does not store the password itself. Existing browser data is migrated into the encrypted vault during setup.
 
-Select **Lock** in the header whenever you finish working. The app also locks after 15 minutes without activity, and repeated incorrect passwords trigger progressively longer delays. There is no password recovery, so keep the password in a trusted password manager.
+After setup, Jiminy Snippet displays a one-time recovery key. Copy it into a trusted password manager before continuing. If the password is forgotten, select **Use Recovery Key**, enter the saved key, and create a replacement password. The recovery key does not reveal the old password.
+
+Existing password-protected v2.7 vaults are upgraded after the next successful password unlock and will then display their new recovery key.
+
+Select **Lock** in the header whenever you finish working. The app also locks after 15 minutes without activity, and repeated incorrect passwords or recovery keys trigger progressively longer delays. If both the password and recovery key are lost, the encrypted data cannot be recovered.
 
 The password protects the app's browser-local vault from casual access. It cannot protect an already unlocked browser or prevent someone with access to the HTML from replacing the application. **Backup Data** exports a plaintext JSON file, so keep downloaded backups in a secure location.
 

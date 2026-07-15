@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.7.0">
+  <meta name="application-version" content="2.8.0">
   <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.7.0</title>
+  <title>Jiminy Snippet v2.8.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -197,6 +197,25 @@
       margin: 0;
       color: var(--red);
       font-weight: 700;
+    }
+
+    .security-secondary {
+      justify-content: center;
+      border-color: transparent;
+      background: transparent;
+      color: var(--cqu-green-dark);
+    }
+
+    .recovery-key-panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .recovery-key {
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      overflow-wrap: anywhere;
     }
 
     header {
@@ -1022,7 +1041,7 @@
       <p id="securityMessage" class="subtle">Enter your password to decrypt the locally stored app data.</p>
       <form id="securityForm">
         <label>
-          Password
+          <span id="securityCredentialLabel">Password</span>
           <input id="securityPassword" type="password" required maxlength="128" autocomplete="current-password">
         </label>
         <label id="securityConfirmRow" class="hidden">
@@ -1031,7 +1050,15 @@
         </label>
         <p id="securityError" class="security-error" role="alert" aria-live="assertive"></p>
         <button id="securitySubmitBtn" type="submit" class="primary">Unlock</button>
+        <button id="securityRecoveryBtn" type="button" class="security-secondary">Use Recovery Key</button>
       </form>
+      <section id="recoveryKeyPanel" class="recovery-key-panel hidden" aria-labelledby="recoveryKeyTitle">
+        <h3 id="recoveryKeyTitle">Save Your Recovery Key</h3>
+        <p class="subtle">This key is shown once. Store it in a password manager or another secure location.</p>
+        <textarea id="recoveryKeyOutput" class="recovery-key" rows="3" readonly aria-label="Recovery key"></textarea>
+        <button id="copyRecoveryKeyBtn" type="button">Copy Recovery Key</button>
+        <button id="continueAfterRecoveryBtn" type="button" class="primary">I Have Saved It</button>
+      </section>
     </div>
   </section>
   <div class="app">
@@ -1041,7 +1068,7 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.7.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.8.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
@@ -1403,7 +1430,7 @@
       }
     ];
 
-    const appVersion = "2.7.0";
+    const appVersion = "2.8.0";
     const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
     const authStorageKey = "jiminy-snippet-auth-v1";
@@ -1444,10 +1471,16 @@
       securityMessage: document.querySelector("#securityMessage"),
       securityForm: document.querySelector("#securityForm"),
       securityPassword: document.querySelector("#securityPassword"),
+      securityCredentialLabel: document.querySelector("#securityCredentialLabel"),
       securityConfirmRow: document.querySelector("#securityConfirmRow"),
       securityPasswordConfirm: document.querySelector("#securityPasswordConfirm"),
       securityError: document.querySelector("#securityError"),
       securitySubmitBtn: document.querySelector("#securitySubmitBtn"),
+      securityRecoveryBtn: document.querySelector("#securityRecoveryBtn"),
+      recoveryKeyPanel: document.querySelector("#recoveryKeyPanel"),
+      recoveryKeyOutput: document.querySelector("#recoveryKeyOutput"),
+      copyRecoveryKeyBtn: document.querySelector("#copyRecoveryKeyBtn"),
+      continueAfterRecoveryBtn: document.querySelector("#continueAfterRecoveryBtn"),
       selectedSnippetSection: document.querySelector("#selectedSnippetSection"),
       selectedSnippets: document.querySelector("#selectedSnippets"),
       categoryFilter: document.querySelector("#categoryFilter"),
@@ -1526,6 +1559,8 @@
     let encryptedSaveQueue = Promise.resolve();
     let autoLockTimer = 0;
     let lastActivityAt = Date.now();
+    let recoveredDataKeyBytes = null;
+    let recoveryAuthRecord = null;
 
     const detailFields = {
       name: { input: "studentInput", label: "Student" },
@@ -1664,6 +1699,16 @@
       return bytes;
     }
 
+    function generateRecoveryCode() {
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      const hex = [...bytes].map(value => value.toString(16).padStart(2, "0")).join("").toUpperCase();
+      return hex.match(/.{1,8}/g).join("-");
+    }
+
+    function normalizeRecoveryCode(value) {
+      return String(value || "").replace(/[^a-fA-F0-9]/g, "").toUpperCase();
+    }
+
     async function deriveSecurityMaterial(password, salt, iterations = pbkdf2Iterations) {
       const passwordKey = await crypto.subtle.importKey(
         "raw",
@@ -1681,6 +1726,65 @@
       return { key, verifier: bits.slice(32) };
     }
 
+    async function importVaultKey(dataKeyBytes) {
+      return crypto.subtle.importKey("raw", dataKeyBytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+    }
+
+    async function wrapDataKey(dataKeyBytes, wrappingKey, purpose) {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv, additionalData: new TextEncoder().encode(purpose), tagLength: 128 },
+        wrappingKey,
+        dataKeyBytes
+      ));
+      return { iv: bytesToBase64(iv), ciphertext: bytesToBase64(ciphertext) };
+    }
+
+    async function unwrapDataKey(wrapped, wrappingKey, purpose) {
+      return new Uint8Array(await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: base64ToBytes(wrapped.iv),
+          additionalData: new TextEncoder().encode(purpose),
+          tagLength: 128
+        },
+        wrappingKey,
+        base64ToBytes(wrapped.ciphertext)
+      ));
+    }
+
+    async function createRecoveryEnvelope(password) {
+      const dataKeyBytes = crypto.getRandomValues(new Uint8Array(32));
+      const passwordSalt = crypto.getRandomValues(new Uint8Array(16));
+      const recoverySalt = crypto.getRandomValues(new Uint8Array(16));
+      const recoveryCode = generateRecoveryCode();
+      const passwordMaterial = await deriveSecurityMaterial(password, passwordSalt);
+      const recoveryMaterial = await deriveSecurityMaterial(normalizeRecoveryCode(recoveryCode), recoverySalt);
+      const auth = {
+        version: 2,
+        algorithm: "PBKDF2-HMAC-SHA-256/AES-256-GCM",
+        iterations: pbkdf2Iterations,
+        passwordSalt: bytesToBase64(passwordSalt),
+        passwordVerifier: bytesToBase64(passwordMaterial.verifier),
+        passwordWrap: await wrapDataKey(dataKeyBytes, passwordMaterial.key, "jiminy-password-wrap-v2"),
+        recoverySalt: bytesToBase64(recoverySalt),
+        recoveryVerifier: bytesToBase64(recoveryMaterial.verifier),
+        recoveryWrap: await wrapDataKey(dataKeyBytes, recoveryMaterial.key, "jiminy-recovery-wrap-v2")
+      };
+      return { auth, dataKeyBytes, key: await importVaultKey(dataKeyBytes), recoveryCode };
+    }
+
+    async function rewrapPassword(password, auth, dataKeyBytes) {
+      const passwordSalt = crypto.getRandomValues(new Uint8Array(16));
+      const material = await deriveSecurityMaterial(password, passwordSalt);
+      return {
+        ...auth,
+        passwordSalt: bytesToBase64(passwordSalt),
+        passwordVerifier: bytesToBase64(material.verifier),
+        passwordWrap: await wrapDataKey(dataKeyBytes, material.key, "jiminy-password-wrap-v2")
+      };
+    }
+
     function constantTimeEqual(left, right) {
       if (left.length !== right.length) return false;
       let difference = 0;
@@ -1691,9 +1795,11 @@
     function readAuthRecord() {
       try {
         const record = JSON.parse(localStorage.getItem(authStorageKey) || "null");
-        if (!record || record.version !== 1 || !record.salt || !record.verifier ||
-            !Number.isInteger(record.iterations) || record.iterations < 100000 || record.iterations > 2000000) return null;
-        return record;
+        if (!record || !Number.isInteger(record.iterations) || record.iterations < 100000 || record.iterations > 2000000) return null;
+        if (record.version === 1 && record.salt && record.verifier) return record;
+        if (record.version === 2 && record.passwordSalt && record.passwordVerifier && record.passwordWrap?.iv && record.passwordWrap?.ciphertext &&
+            record.recoverySalt && record.recoveryVerifier && record.recoveryWrap?.iv && record.recoveryWrap?.ciphertext) return record;
+        return null;
       } catch {
         return null;
       }
@@ -1778,25 +1884,52 @@
       els.securitySubmitBtn.disabled = busy;
       els.securityPassword.disabled = busy;
       els.securityPasswordConfirm.disabled = busy;
-      els.securitySubmitBtn.textContent = busy
-        ? (securityMode === "setup" ? "Securing…" : "Unlocking…")
-        : (securityMode === "setup" ? "Create Password" : "Unlock");
+      const labels = {
+        setup: ["Securing…", "Create Password"],
+        unlock: ["Unlocking…", "Unlock"],
+        recovery: ["Checking…", "Recover Access"],
+        reset: ["Resetting…", "Set New Password"]
+      };
+      els.securitySubmitBtn.textContent = labels[securityMode]?.[busy ? 0 : 1] || "Continue";
     }
 
     function showSecurityMode(mode) {
       securityMode = mode;
-      const setup = mode === "setup";
-      els.securityTitle.textContent = setup ? "Protect Jiminy Snippet" : "Unlock Jiminy Snippet";
-      els.securityMessage.textContent = setup
-        ? "Create a password to encrypt the app data stored in this browser. Use at least 12 characters; lost passwords cannot be recovered."
-        : "Enter your password to decrypt the locally stored app data.";
-      els.securityConfirmRow.classList.toggle("hidden", !setup);
-      els.securityPassword.autocomplete = setup ? "new-password" : "current-password";
-      els.securityPassword.minLength = setup ? 12 : 1;
-      els.securityPasswordConfirm.required = setup;
+      const needsNewPassword = mode === "setup" || mode === "reset";
+      const content = {
+        setup: ["Protect Jiminy Snippet", "Create a password to encrypt the app data stored in this browser. Use at least 12 characters."],
+        unlock: ["Unlock Jiminy Snippet", "Enter your password to decrypt the locally stored app data."],
+        recovery: ["Recover Jiminy Snippet", "Enter the recovery key that was shown when password protection was created."],
+        reset: ["Set a New Password", "Recovery succeeded. Create a new password of at least 12 characters."]
+      }[mode];
+      els.securityTitle.textContent = content[0];
+      els.securityMessage.textContent = content[1];
+      els.securityCredentialLabel.textContent = mode === "recovery" ? "Recovery key" : (mode === "reset" ? "New password" : "Password");
+      els.securityConfirmRow.classList.toggle("hidden", !needsNewPassword);
+      els.securityPassword.type = mode === "recovery" ? "text" : "password";
+      els.securityPassword.autocomplete = needsNewPassword ? "new-password" : (mode === "unlock" ? "current-password" : "off");
+      els.securityPassword.minLength = needsNewPassword ? 12 : 1;
+      els.securityPasswordConfirm.required = needsNewPassword;
+      const recoveryAvailable = readAuthRecord()?.version === 2;
+      els.securityRecoveryBtn.classList.toggle("hidden", !recoveryAvailable || (mode !== "unlock" && mode !== "recovery"));
+      els.securityRecoveryBtn.textContent = mode === "recovery" ? "Use Password Instead" : "Use Recovery Key";
+      els.securityForm.classList.remove("hidden");
+      els.recoveryKeyPanel.classList.add("hidden");
+      els.securityPassword.value = "";
+      els.securityPasswordConfirm.value = "";
       els.securityError.textContent = "";
       setSecurityBusy(false);
       els.securityPassword.focus();
+    }
+
+    function showRecoveryKey(recoveryCode) {
+      els.securityForm.classList.add("hidden");
+      els.recoveryKeyPanel.classList.remove("hidden");
+      els.securityTitle.textContent = "Recovery Key Created";
+      els.securityMessage.textContent = "Save this key now. It is required if the password is forgotten.";
+      els.recoveryKeyOutput.value = recoveryCode;
+      els.recoveryKeyOutput.focus();
+      els.recoveryKeyOutput.select();
     }
 
     function resetAutoLock() {
@@ -1822,7 +1955,7 @@
       const delay = Math.min(30000, 1000 * (2 ** Math.min(count - 1, 5)));
       const lockedUntil = Date.now() + delay;
       localStorage.setItem(securityFailureKey, JSON.stringify({ count, lockedUntil }));
-      els.securityError.textContent = `Incorrect password. Try again in ${Math.ceil(delay / 1000)} seconds.`;
+      els.securityError.textContent = `Incorrect ${securityMode === "recovery" ? "recovery key" : "password"}. Try again in ${Math.ceil(delay / 1000)} seconds.`;
       setSecurityBusy(true);
       setTimeout(() => {
         setSecurityBusy(false);
@@ -1838,42 +1971,57 @@
         return;
       }
 
-      const password = els.securityPassword.value;
-      if (password.length > 128) {
-        els.securityError.textContent = "Password must be no more than 128 characters.";
+      const credential = els.securityPassword.value;
+      if (credential.length > 128) {
+        els.securityError.textContent = "The entry must be no more than 128 characters.";
         return;
       }
 
-      if (securityMode === "setup") {
-        if (password.length < 12) {
+      if (securityMode === "setup" || securityMode === "reset") {
+        if (credential.length < 12) {
           els.securityError.textContent = "Use a password of at least 12 characters.";
           return;
         }
-        if (password !== els.securityPasswordConfirm.value) {
+        if (credential !== els.securityPasswordConfirm.value) {
           els.securityError.textContent = "The passwords do not match.";
           return;
         }
         setSecurityBusy(true);
+
+        if (securityMode === "reset") {
+          try {
+            if (!recoveryAuthRecord || !recoveredDataKeyBytes) throw new Error("Missing recovery state");
+            const nextAuth = await rewrapPassword(credential, recoveryAuthRecord, recoveredDataKeyBytes);
+            localStorage.setItem(authStorageKey, JSON.stringify(nextAuth));
+            recoveryAuthRecord = null;
+            recoveredDataKeyBytes.fill(0);
+            recoveredDataKeyBytes = null;
+            localStorage.removeItem(securityFailureKey);
+            finishUnlock();
+          } catch {
+            els.securityError.textContent = "The password could not be reset. Try the recovery process again.";
+            vaultKey = null;
+            recoveredDataKeyBytes = null;
+            recoveryAuthRecord = null;
+            setSecurityBusy(false);
+          }
+          return;
+        }
+
         try {
-          const salt = crypto.getRandomValues(new Uint8Array(16));
-          const material = await deriveSecurityMaterial(password, salt);
-          localStorage.setItem(authStorageKey, JSON.stringify({
-            version: 1,
-            algorithm: "PBKDF2-HMAC-SHA-256",
-            iterations: pbkdf2Iterations,
-            salt: bytesToBase64(salt),
-            verifier: bytesToBase64(material.verifier)
-          }));
-          vaultKey = material.key;
+          const envelope = await createRecoveryEnvelope(credential);
+          vaultKey = envelope.key;
           loadLegacyState();
           await encryptStateSnapshot(JSON.stringify(state), vaultKey);
+          localStorage.setItem(authStorageKey, JSON.stringify(envelope.auth));
           localStorage.removeItem(storageKey);
           localStorage.removeItem(securityFailureKey);
           els.securityPassword.value = "";
           els.securityPasswordConfirm.value = "";
-          finishUnlock();
+          envelope.dataKeyBytes.fill(0);
+          showRecoveryKey(envelope.recoveryCode);
         } catch {
-          els.securityError.textContent = "The encrypted vault could not be created. No password was stored.";
+          els.securityError.textContent = "The encrypted vault and recovery key could not be created. No password was stored.";
           localStorage.removeItem(authStorageKey);
           localStorage.removeItem(vaultStorageKey);
           vaultKey = null;
@@ -1894,22 +2042,68 @@
         return;
       }
       setSecurityBusy(true);
+
+      if (securityMode === "recovery") {
+        try {
+          if (auth.version !== 2) throw new Error("Recovery unavailable");
+          const recoveryCode = normalizeRecoveryCode(credential);
+          if (recoveryCode.length !== 64) {
+            await recordFailedUnlock();
+            return;
+          }
+          const material = await deriveSecurityMaterial(recoveryCode, base64ToBytes(auth.recoverySalt), auth.iterations);
+          if (!constantTimeEqual(material.verifier, base64ToBytes(auth.recoveryVerifier))) {
+            await recordFailedUnlock();
+            return;
+          }
+          const dataKeyBytes = await unwrapDataKey(auth.recoveryWrap, material.key, "jiminy-recovery-wrap-v2");
+          vaultKey = await importVaultKey(dataKeyBytes);
+          if (!await decryptStoredState(vaultKey)) throw new Error("Missing vault");
+          recoveredDataKeyBytes = dataKeyBytes;
+          recoveryAuthRecord = auth;
+          localStorage.removeItem(securityFailureKey);
+          showSecurityMode("reset");
+        } catch {
+          vaultKey = null;
+          recoveredDataKeyBytes = null;
+          recoveryAuthRecord = null;
+          els.securityError.textContent = "The recovery key could not unlock the encrypted data.";
+          setSecurityBusy(false);
+        }
+        return;
+      }
+
       try {
-        const material = await deriveSecurityMaterial(password, base64ToBytes(auth.salt), auth.iterations);
-        if (!constantTimeEqual(material.verifier, base64ToBytes(auth.verifier))) {
+        const salt = base64ToBytes(auth.version === 1 ? auth.salt : auth.passwordSalt);
+        const expectedVerifier = base64ToBytes(auth.version === 1 ? auth.verifier : auth.passwordVerifier);
+        const material = await deriveSecurityMaterial(credential, salt, auth.iterations);
+        if (!constantTimeEqual(material.verifier, expectedVerifier)) {
           await recordFailedUnlock();
           return;
         }
-        vaultKey = material.key;
-        const loaded = await decryptStoredState(vaultKey);
-        if (!loaded) {
-          loadLegacyState();
-          await encryptStateSnapshot(JSON.stringify(state), vaultKey);
-          localStorage.removeItem(storageKey);
+
+        if (auth.version === 2) {
+          const dataKeyBytes = await unwrapDataKey(auth.passwordWrap, material.key, "jiminy-password-wrap-v2");
+          vaultKey = await importVaultKey(dataKeyBytes);
+          if (!await decryptStoredState(vaultKey)) throw new Error("Missing vault");
+          dataKeyBytes.fill(0);
+          localStorage.removeItem(securityFailureKey);
+          els.securityPassword.value = "";
+          finishUnlock();
+          return;
         }
+
+        vaultKey = material.key;
+        if (!await decryptStoredState(vaultKey)) loadLegacyState();
+        const envelope = await createRecoveryEnvelope(credential);
+        vaultKey = envelope.key;
+        await encryptStateSnapshot(JSON.stringify(state), vaultKey);
+        localStorage.setItem(authStorageKey, JSON.stringify(envelope.auth));
+        localStorage.removeItem(storageKey);
         localStorage.removeItem(securityFailureKey);
         els.securityPassword.value = "";
-        finishUnlock();
+        envelope.dataKeyBytes.fill(0);
+        showRecoveryKey(envelope.recoveryCode);
       } catch {
         vaultKey = null;
         els.securityError.textContent = "The encrypted data could not be opened. The password may be incorrect or the stored data may be damaged.";
@@ -3468,6 +3662,25 @@
     });
 
     els.securityForm.addEventListener("submit", handleSecuritySubmit);
+    els.securityRecoveryBtn.addEventListener("click", () => {
+      showSecurityMode(securityMode === "recovery" ? "unlock" : "recovery");
+    });
+    els.copyRecoveryKeyBtn.addEventListener("click", async () => {
+      const recoveryKey = els.recoveryKeyOutput.value;
+      try {
+        await navigator.clipboard.writeText(recoveryKey);
+        els.copyRecoveryKeyBtn.textContent = "Copied";
+      } catch {
+        els.recoveryKeyOutput.focus();
+        els.recoveryKeyOutput.select();
+        document.execCommand("copy");
+        els.copyRecoveryKeyBtn.textContent = "Copied";
+      }
+    });
+    els.continueAfterRecoveryBtn.addEventListener("click", () => {
+      els.recoveryKeyOutput.value = "";
+      finishUnlock();
+    });
     ["pointerdown", "keydown", "touchstart"].forEach(eventName => {
       document.addEventListener(eventName, resetAutoLock, { passive: true });
     });
