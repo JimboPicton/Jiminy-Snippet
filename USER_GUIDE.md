@@ -8,7 +8,7 @@ Open `index.html` in your web browser.
 
 The current version number and build date appear in the green header, making it easy to confirm which build is open.
 
-The app saves your snippets and current report information in the browser on this computer. Use **Backup Data** regularly if you want a portable copy.
+The app saves your reusable snippets and stored report details in the browser on this computer. Report templates and generated output start blank whenever the page is opened. Use **Backup Data** regularly if you want a portable copy.
 
 ## 2. Understand The Main Areas
 
@@ -54,14 +54,9 @@ Use the menu button in the **Collections** or **Stored Report Details** header t
 4. Choose a **Snippet Purpose**.
    For most assessment reports, use **Student Report Comment**. Use **General Text** for reusable text that is not specifically a student report comment. The Purpose filter can show either type in the library.
 5. Add **Default Feedback**. This is the fallback when the snippet has no choices.
-6. Optionally add **Feedback Choices**, one per line in `Label | expanded feedback` format.
+6. Optionally select **Add Option** under **Feedback Options**. Enter an option label, such as **Too Fast**, and its default feedback comment. Add as many options as the snippet requires.
 
-   ```text
-   Too Fast | The delivery was too fast. Slow down and give each point more space.
-   Too Slow | The delivery was too slow. Increase the pace and prioritise key points.
-   ```
-
-   A line without `|` uses the label itself as the inserted feedback. Default Feedback is optional when at least one choice is provided.
+   Default Feedback is optional when at least one feedback option is provided.
 7. Select **Save Snippet**.
 
 If you type a new collection name while editing or creating a snippet, that collection is created automatically. After saving, Jiminy Snippet switches to that collection so you can confirm the snippet moved there.
@@ -123,10 +118,10 @@ Before a report is generated, Jiminy Snippet identifies unknown fields and any r
 1. Browse **My Snippets**, or use Search, Collection, and Purpose filters. With an empty search, the most recently used snippets appear first.
 2. In Search, use **Up** and **Down** to browse results, **Enter** to select the active result, and **Escape** to clear the query.
 3. Use the **Collections** panel to filter by collection.
-4. Select **Select** on each snippet you want to include.
+4. Place the cursor where the feedback belongs in the Report Template, then select **Add to Report** on the snippet. Its field is inserted immediately.
 5. Selected snippets appear under **Selected Snippet Fields** and **Snippet Feedback Fields**.
-6. Choose the applicable feedback value, such as **Too Fast** or **Too Slow**.
-7. Select **Insert `{field}`** to place the snippet field at the cursor in the Report Template.
+6. Tick every applicable feedback value, such as **Too Fast** or **Too Slow**.
+7. Add an optional report-specific comment beside any checked value. Use **Insert Again** if the same snippet field is needed more than once.
 8. Drag selected abbreviations left or right to change fallback report order, or focus one and use **Alt+Left** or **Alt+Right**.
 9. Select the `x` on a selected abbreviation to remove it.
 
@@ -136,7 +131,7 @@ After adding report information, writing the template, and selecting snippets:
 
 1. Select **Generate Report**.
 2. Report-level fields are replaced with Student, Unit, Assessment, Teaching Staff, and Date/Time values.
-3. Snippet fields such as `{timing}` are replaced with the selected feedback choice.
+3. Snippet fields such as `{timing}` are replaced with all checked feedback options and their optional comments.
 4. The generated report appears in the rich text editor and print preview.
 
 If the Report Template is blank, Jiminy Snippet retains the older behavior and joins the selected snippets in the order shown under **Selected Snippet Fields**.
@@ -182,7 +177,7 @@ Use these options in the top toolbar:
 
 Backups also include saved Units, Assessment items, and Teaching Staff. Keep backup files somewhere safe if you plan to use Jiminy Snippet across different computers or browsers.
 
-The current backup state schema is version 3. Backups include the Report Template, snippet choices, and selected feedback values. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
+The current backup state schema is version 4. Backups include the Report Template, snippet options, and selected feedback values/comments. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
 
 ## 11. Suggested Workflow
 
@@ -190,7 +185,7 @@ The current backup state schema is version 3. Backups include the Report Templat
 2. Enter Student, Unit, Assessment, and Teaching Staff.
 3. Write or reuse a Report Template.
 4. Select the snippets that apply to the student.
-5. Choose each snippet's feedback and insert its field into the template.
+5. Add each snippet to the report, tick the applicable feedback, and enter any optional comments.
 6. Generate the report.
 7. Edit the generated text with the rich text editor.
 8. Save the report as `.html` for formatted storage or `.txt` for plain text storage.

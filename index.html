@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.1.0">
+  <meta name="application-version" content="2.2.0">
   <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.1.0</title>
+  <title>Jiminy Snippet v2.2.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -450,6 +450,51 @@
       font-weight: 800;
     }
 
+    .choice-editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .choice-editor-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .choice-editor-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.7fr) minmax(180px, 1.3fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .choice-editor-row button {
+      min-height: 38px;
+    }
+
+    .feedback-option {
+      display: grid;
+      grid-template-columns: minmax(130px, 0.7fr) minmax(160px, 1.3fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+      text-transform: none;
+    }
+
+    .checkbox-label input {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+    }
+
     .template-input {
       min-height: 220px;
       line-height: 1.55;
@@ -777,6 +822,8 @@
       .form-grid,
       .search-row,
       .snippet-field-controls,
+      .choice-editor-row,
+      .feedback-option,
       .report-meta {
         grid-template-columns: 1fr;
       }
@@ -823,7 +870,7 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.1.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.2.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
@@ -952,11 +999,13 @@
                 Default Feedback
                 <textarea id="textInput" rows="5" placeholder="Please review your timing. Optional when feedback choices are provided."></textarea>
               </label>
-              <label class="span-2">
-                Feedback Choices
-                <textarea id="choicesInput" rows="5" placeholder="Too Fast | Slow down and give each point more space.&#10;Too Slow | Increase the pace and prioritise the key points."></textarea>
-                <span class="search-hint">Optional. Enter one choice per line as Label | expanded feedback. A label without a | uses the label itself as the feedback.</span>
-              </label>
+              <div class="span-2 field-group">
+                <div class="choice-editor-head">
+                  <span class="field-group-label">Feedback Options</span>
+                  <button type="button" id="addChoiceBtn">Add Option</button>
+                </div>
+                <div id="choiceEditorList" class="choice-editor-list"></div>
+              </div>
             </div>
             <div class="snippet-actions">
               <button type="submit" class="primary">Save Snippet</button>
@@ -1005,15 +1054,13 @@
               Report Template
               <textarea id="reportTemplateInput" class="template-input" rows="10" placeholder="Hello {name}&#10;&#10;Well done on delivering a good submission for {assessment}.&#10;&#10;Areas to work on include:&#10;1. {timing}&#10;&#10;I look forward to your next submission.&#10;&#10;All the best,&#10;Jim"></textarea>
             </label>
-            <label>
+            <label id="selectedSnippetSection" class="hidden">
               Selected Snippet Fields
-              <div id="selectedSnippets" class="selected-row" aria-describedby="selectedHint"></div>
+              <div id="selectedSnippets" class="selected-row"></div>
             </label>
-            <p id="selectedHint" class="search-hint">Selected snippets provide fields for the template. Drag to reorder fallback output, or use Alt+Left and Alt+Right.</p>
-            <div class="field-group">
+            <div id="snippetFeedbackSection" class="field-group hidden">
               <span class="field-group-label">Snippet Feedback Fields</span>
               <div id="snippetFieldControls" class="snippet-field-controls"></div>
-              <p class="search-hint">Choose the feedback for each selected snippet, then insert its field into the report template.</p>
             </div>
             <div id="validationSummary" class="validation-summary hidden" role="alert" tabindex="-1"></div>
             <div class="compose-actions">
@@ -1153,10 +1200,10 @@
       }
     ];
 
-    const appVersion = "2.1.0";
+    const appVersion = "2.2.0";
     const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
-    const stateSchemaVersion = 3;
+    const stateSchemaVersion = 4;
 
     const state = {
       appVersion,
@@ -1183,6 +1230,7 @@
 
     const els = {
       snippetList: document.querySelector("#snippetList"),
+      selectedSnippetSection: document.querySelector("#selectedSnippetSection"),
       selectedSnippets: document.querySelector("#selectedSnippets"),
       categoryFilter: document.querySelector("#categoryFilter"),
       purposeFilter: document.querySelector("#purposeFilter"),
@@ -1195,7 +1243,8 @@
       categoryInput: document.querySelector("#categoryInput"),
       contentTypeInput: document.querySelector("#contentTypeInput"),
       textInput: document.querySelector("#textInput"),
-      choicesInput: document.querySelector("#choicesInput"),
+      addChoiceBtn: document.querySelector("#addChoiceBtn"),
+      choiceEditorList: document.querySelector("#choiceEditorList"),
       collectionList: document.querySelector("#collectionList"),
       libraryStatus: document.querySelector("#libraryStatus"),
       cancelEditBtn: document.querySelector("#cancelEditBtn"),
@@ -1220,6 +1269,7 @@
       clearReportBtn: document.querySelector("#clearReportBtn"),
       validationSummary: document.querySelector("#validationSummary"),
       reportTemplateInput: document.querySelector("#reportTemplateInput"),
+      snippetFeedbackSection: document.querySelector("#snippetFeedbackSection"),
       snippetFieldControls: document.querySelector("#snippetFieldControls"),
       reportText: document.querySelector("#reportText"),
       printPreview: document.querySelector("#printPreview"),
@@ -1267,23 +1317,40 @@
       }).filter(Boolean);
     }
 
-    function parseChoiceLines(value) {
-      return normalizeChoices(String(value || "").split(/\r?\n/).map(line => {
-        const trimmed = line.trim();
-        if (!trimmed) return null;
-        const separator = trimmed.indexOf("|");
-        if (separator < 0) return { label: trimmed, text: trimmed };
-        return {
-          label: trimmed.slice(0, separator).trim(),
-          text: trimmed.slice(separator + 1).trim()
-        };
-      }));
+    function choiceEditorRow(choice = {}) {
+      return `<div class="choice-editor-row">
+        <input type="text" data-choice-label placeholder="Option" value="${escapeHtml(choice.label || "")}" aria-label="Feedback option">
+        <input type="text" data-choice-text placeholder="Default comment" value="${escapeHtml(choice.text || "")}" aria-label="Default feedback comment">
+        <button type="button" data-remove-choice aria-label="Remove feedback option">Remove</button>
+      </div>`;
     }
 
-    function formatChoiceLines(choices) {
-      return normalizeChoices(choices).map(choice => (
-        choice.label === choice.text ? choice.label : `${choice.label} | ${choice.text}`
-      )).join("\n");
+    function renderChoiceEditor(choices = []) {
+      const normalized = normalizeChoices(choices);
+      els.choiceEditorList.innerHTML = (normalized.length ? normalized : [{ label: "", text: "" }])
+        .map(choiceEditorRow)
+        .join("");
+    }
+
+    function readChoiceEditor() {
+      return normalizeChoices([...els.choiceEditorList.querySelectorAll(".choice-editor-row")].map(row => ({
+        label: row.querySelector("[data-choice-label]").value,
+        text: row.querySelector("[data-choice-text]").value
+      })));
+    }
+
+    function normalizeSnippetValue(value) {
+      if (Number.isFinite(Number(value)) && (typeof value === "number" || typeof value === "string")) {
+        return { selected: [Math.max(0, Number(value) || 0)], comments: {} };
+      }
+      if (!value || typeof value !== "object") return { selected: [], comments: {} };
+      const selected = Array.isArray(value.selected)
+        ? [...new Set(value.selected.map(index => Math.max(0, Number(index) || 0)))].slice(0, 100)
+        : [];
+      const comments = value.comments && typeof value.comments === "object"
+        ? Object.fromEntries(Object.entries(value.comments).map(([index, comment]) => [String(Math.max(0, Number(index) || 0)), String(comment || "").slice(0, 2000)]))
+        : {};
+      return { selected, comments };
     }
 
     function snippetToken(keyword) {
@@ -1314,21 +1381,19 @@
               lastUsedAt: Number.isFinite(snippet.lastUsedAt) ? snippet.lastUsedAt : 0
             }))
           : [...starterSnippets];
-        state.selectedIds = Array.isArray(data.selectedIds) ? data.selectedIds : [];
+        state.selectedIds = [];
         state.details = { ...state.details, ...(data.details || {}) };
         state.storedDetails = {
           ...state.storedDetails,
           ...(data.storedDetails || {})
         };
-        state.reportTemplate = typeof data.reportTemplate === "string" ? data.reportTemplate : "";
-        state.snippetValues = data.snippetValues && typeof data.snippetValues === "object"
-          ? Object.fromEntries(Object.entries(data.snippetValues).map(([id, value]) => [String(id), Math.max(0, Number(value) || 0)]))
-          : {};
+        state.reportTemplate = "";
+        state.snippetValues = {};
         state.collapsedPanels = {
           ...state.collapsedPanels,
           ...(data.collapsedPanels || {})
         };
-        state.reportText = data.reportText || "";
+        state.reportText = "";
       } catch {
         state.snippets = [...starterSnippets];
       }
@@ -1508,7 +1573,7 @@
             <div class="snippet-text">${escapeHtml(snippet.text || normalizeChoices(snippet.choices)[0]?.text || "")}</div>
             ${snippet.choices?.length ? `<div class="category">${snippet.choices.length} feedback choice${snippet.choices.length === 1 ? "" : "s"}</div>` : ""}
             <div class="mini-actions">
-              <button type="button" data-action="toggle" data-id="${safeId}">${selected ? "Remove" : "Select"}</button>
+              <button type="button" data-action="toggle" data-id="${safeId}">${selected ? "Remove" : "Add to Report"}</button>
               <button type="button" data-action="edit" data-id="${safeId}" aria-label="Edit ${escapeHtml(snippet.keyword || "untitled snippet")}">Edit</button>
               <button type="button" data-action="delete" data-id="${safeId}" class="danger" aria-label="Delete ${escapeHtml(snippet.keyword || "untitled snippet")}">Delete</button>
             </div>
@@ -1523,9 +1588,12 @@
         .filter(Boolean);
 
       if (!selected.length) {
-        els.selectedSnippets.innerHTML = '<span class="subtle">No snippets selected.</span>';
+        els.selectedSnippetSection.classList.add("hidden");
+        els.selectedSnippets.innerHTML = "";
         return;
       }
+
+      els.selectedSnippetSection.classList.remove("hidden");
 
       els.selectedSnippets.innerHTML = selected.map(snippet => `
         <span class="chip" draggable="true" tabindex="0" data-selected-id="${escapeHtml(snippet.id)}" aria-label="${escapeHtml(snippet.keyword)}, selected snippet. Use Alt plus Left or Right to reorder." title="Drag to reorder; Alt+Left or Alt+Right also works">
@@ -1538,9 +1606,14 @@
     function selectedSnippetValue(snippet) {
       const choices = normalizeChoices(snippet.choices);
       if (!choices.length) return snippet.text || "";
-      const storedIndex = Math.max(0, Number(state.snippetValues[snippet.id]) || 0);
-      const choice = choices[Math.min(storedIndex, choices.length - 1)] || choices[0];
-      return choice.text;
+      const value = normalizeSnippetValue(state.snippetValues[snippet.id]);
+      return value.selected
+        .filter(index => choices[index])
+        .map(index => {
+          const comment = String(value.comments[index] || "").trim();
+          return `${choices[index].text}${comment ? ` ${comment}` : ""}`;
+        })
+        .join(" ");
     }
 
     function renderSnippetFields() {
@@ -1549,28 +1622,35 @@
         .filter(Boolean);
 
       if (!selected.length) {
-        els.snippetFieldControls.innerHTML = '<span class="subtle">Select a snippet to add its feedback field.</span>';
+        els.snippetFeedbackSection.classList.add("hidden");
+        els.snippetFieldControls.innerHTML = "";
         return;
       }
+
+      els.snippetFeedbackSection.classList.remove("hidden");
 
       els.snippetFieldControls.innerHTML = selected.map(snippet => {
         const choices = normalizeChoices(snippet.choices);
         const token = snippetToken(snippet.keyword);
-        const selectedIndex = Math.min(Math.max(0, Number(state.snippetValues[snippet.id]) || 0), Math.max(0, choices.length - 1));
+        const value = normalizeSnippetValue(state.snippetValues[snippet.id]);
         const control = choices.length
-          ? `<label>Feedback
-              <select data-snippet-choice="${escapeHtml(snippet.id)}">
-                ${choices.map((choice, index) => `<option value="${index}" ${index === selectedIndex ? "selected" : ""}>${escapeHtml(choice.label)}</option>`).join("")}
-              </select>
-            </label>`
-          : `<p class="subtle">Uses the default feedback: ${escapeHtml(snippet.text)}</p>`;
+          ? choices.map((choice, index) => {
+              const checked = value.selected.includes(index);
+              return `<div class="feedback-option">
+                <label class="checkbox-label">
+                  <input type="checkbox" data-snippet-choice="${escapeHtml(snippet.id)}" data-choice-index="${index}" ${checked ? "checked" : ""}>
+                  <span>${escapeHtml(choice.label)}</span>
+                </label>
+                <input type="text" data-snippet-comment="${escapeHtml(snippet.id)}" data-choice-index="${index}" value="${escapeHtml(value.comments[index] || "")}" placeholder="Comment (optional)" ${checked ? "" : "disabled"} aria-label="Comment for ${escapeHtml(choice.label)}">
+              </div>`;
+            }).join("")
+          : "";
         return `<div class="snippet-field-card">
           <div class="snippet-field-head">
             <strong>${escapeHtml(snippet.keyword)}</strong>
-            <code>{${escapeHtml(token)}}</code>
+            <button type="button" data-insert-snippet-field="${escapeHtml(token)}">Insert Again</button>
           </div>
           ${control}
-          <button type="button" data-insert-snippet-field="${escapeHtml(token)}">Insert {${escapeHtml(token)}}</button>
         </div>`;
       }).join("");
     }
@@ -1724,6 +1804,7 @@
       els.snippetFormTitle.textContent = "New Snippet";
       els.snippetId.value = "";
       els.snippetForm.reset();
+      renderChoiceEditor();
       els.keywordInput.focus();
     }
 
@@ -1736,19 +1817,27 @@
       els.categoryInput.value = snippet.category;
       els.contentTypeInput.value = snippet.contentType === "Plain Text" ? "General Text" : (snippet.contentType || "General Text");
       els.textInput.value = snippet.text;
-      els.choicesInput.value = formatChoiceLines(snippet.choices);
+      renderChoiceEditor(snippet.choices);
       els.keywordInput.focus();
     }
 
-    function toggleSnippet(id) {
+    function toggleSnippet(id, insertWhenAdding = false) {
+      const snippet = state.snippets.find(item => item.id === id);
       if (state.selectedIds.includes(id)) {
         state.selectedIds = state.selectedIds.filter(selectedId => selectedId !== id);
+        if (snippet) {
+          const field = `{${snippetToken(snippet.keyword)}}`;
+          els.reportTemplateInput.value = els.reportTemplateInput.value.replaceAll(field, "");
+          state.reportTemplate = els.reportTemplateInput.value;
+        }
       } else {
         state.selectedIds.push(id);
-        const snippet = state.snippets.find(item => item.id === id);
         if (snippet) {
           snippet.useCount = (snippet.useCount || 0) + 1;
           snippet.lastUsedAt = Date.now();
+          state.snippetValues[id] = normalizeSnippetValue(state.snippetValues[id]);
+          const field = `{${snippetToken(snippet.keyword)}}`;
+          if (insertWhenAdding && !els.reportTemplateInput.value.includes(field)) insertField(field);
         }
       }
       saveState();
@@ -1835,6 +1924,13 @@
       const unknown = [...new Set(names.filter(name => !detailFields[name] && !isDateTimeMacro(name) && !knownSnippetTokens.has(name)))];
 
       if (!template && !selected.length) messages.push("Add a report template or select at least one snippet before generating a report.");
+      selected.forEach(snippet => {
+        const choices = normalizeChoices(snippet.choices);
+        const value = normalizeSnippetValue(state.snippetValues[snippet.id]);
+        if (choices.length && !value.selected.some(index => choices[index])) {
+          messages.push(`Choose at least one ${snippet.keyword} feedback option.`);
+        }
+      });
       if (duplicateTokens.length) messages.push(`Selected snippets share the same field: ${duplicateTokens.map(name => `{${name}}`).join(", ")}.`);
       if (unknown.length) messages.push(`Unknown field${unknown.length === 1 ? "" : "s"}: ${unknown.map(name => `{${name}}`).join(", ")}.`);
 
@@ -2111,7 +2207,7 @@
             : [];
           state.snippetValues = data.snippetValues && typeof data.snippetValues === "object"
             ? Object.fromEntries(Object.entries(data.snippetValues)
-                .map(([oldId, value]) => [idMap.get(String(oldId)), Math.max(0, Number(value) || 0)])
+                .map(([oldId, value]) => [idMap.get(String(oldId)), normalizeSnippetValue(value)])
                 .filter(([id]) => Boolean(id)))
             : {};
           const importedDetails = data.details && typeof data.details === "object" ? data.details : {};
@@ -2150,7 +2246,7 @@
         category: els.categoryInput.value.trim() || "General",
         contentType: els.contentTypeInput.value,
         text: els.textInput.value.trim(),
-        choices: parseChoiceLines(els.choicesInput.value)
+        choices: readChoiceEditor()
       };
 
       els.textInput.setCustomValidity(!snippet.text && !snippet.choices.length ? "Add default feedback or at least one feedback choice." : "");
@@ -2191,15 +2287,29 @@
       const button = event.target.closest("button[data-action]");
       if (!button) return;
       const { action, id } = button.dataset;
-      if (action === "toggle") toggleSnippet(id);
+      if (action === "toggle") toggleSnippet(id, true);
       if (action === "edit") editSnippet(id);
       if (action === "delete") deleteSnippet(id);
     });
 
     els.keywordInput.addEventListener("input", () => els.keywordInput.setCustomValidity(""));
-    [els.textInput, els.choicesInput].forEach(input => {
-      input.addEventListener("input", () => els.textInput.setCustomValidity(""));
+    els.textInput.addEventListener("input", () => els.textInput.setCustomValidity(""));
+
+    els.addChoiceBtn.addEventListener("click", () => {
+      els.choiceEditorList.insertAdjacentHTML("beforeend", choiceEditorRow());
+      const labels = els.choiceEditorList.querySelectorAll("[data-choice-label]");
+      labels[labels.length - 1]?.focus();
     });
+
+    els.choiceEditorList.addEventListener("click", event => {
+      const button = event.target.closest("button[data-remove-choice]");
+      if (!button) return;
+      button.closest(".choice-editor-row")?.remove();
+      if (!els.choiceEditorList.children.length) renderChoiceEditor();
+      els.textInput.setCustomValidity("");
+    });
+
+    els.choiceEditorList.addEventListener("input", () => els.textInput.setCustomValidity(""));
 
     els.collectionList.addEventListener("click", event => {
       const deleteControl = event.target.closest("[data-delete-collection]");
@@ -2221,9 +2331,28 @@
     });
 
     els.snippetFieldControls.addEventListener("change", event => {
-      const select = event.target.closest("select[data-snippet-choice]");
-      if (!select) return;
-      state.snippetValues[select.dataset.snippetChoice] = Math.max(0, Number(select.value) || 0);
+      const checkbox = event.target.closest("input[type=checkbox][data-snippet-choice]");
+      if (!checkbox) return;
+      const id = checkbox.dataset.snippetChoice;
+      const index = Math.max(0, Number(checkbox.dataset.choiceIndex) || 0);
+      const value = normalizeSnippetValue(state.snippetValues[id]);
+      value.selected = checkbox.checked
+        ? [...new Set([...value.selected, index])]
+        : value.selected.filter(selectedIndex => selectedIndex !== index);
+      state.snippetValues[id] = value;
+      const comment = checkbox.closest(".feedback-option")?.querySelector("[data-snippet-comment]");
+      if (comment) comment.disabled = !checkbox.checked;
+      saveState();
+    });
+
+    els.snippetFieldControls.addEventListener("input", event => {
+      const input = event.target.closest("input[data-snippet-comment]");
+      if (!input) return;
+      const id = input.dataset.snippetComment;
+      const index = Math.max(0, Number(input.dataset.choiceIndex) || 0);
+      const value = normalizeSnippetValue(state.snippetValues[id]);
+      value.comments[index] = input.value;
+      state.snippetValues[id] = value;
       saveState();
     });
 
@@ -2348,7 +2477,7 @@
       if (event.key === "Enter" && snippets[activeSearchIndex]) {
         event.preventDefault();
         const snippet = snippets[activeSearchIndex];
-        if (!state.selectedIds.includes(snippet.id)) toggleSnippet(snippet.id);
+        if (!state.selectedIds.includes(snippet.id)) toggleSnippet(snippet.id, true);
         els.searchStatus.textContent = `${snippet.keyword} selected.`;
       }
       if (event.key === "Escape" && els.searchInput.value) {
@@ -2474,6 +2603,7 @@
 
     loadState();
     renderAll();
+    renderChoiceEditor();
   </script>
 </body>
 </html>

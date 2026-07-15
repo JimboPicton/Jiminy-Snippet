@@ -2,7 +2,7 @@
 
 Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports reusable snippet collections, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
-Current release: **v2.1.0 — 15 July 2026**
+Current release: **v2.2.0 — 15 July 2026**
 
 ## Canonical workspace
 
@@ -27,7 +27,7 @@ The working library is stored in browser local storage under `student-report-tex
 - Snippet collections, text search, Purpose filtering, Recents ordering, and keyboard selection
 - General Text and Student Report Comment snippet purposes
 - Report templates with student, unit, assessment, teaching-staff, date, time, and date-math fields
-- Snippet-specific feedback choices and insertable fields such as `{timing}`
+- Snippet-specific checkbox feedback, optional comments, and insertable fields such as `{timing}`
 - Missing-field and unknown-macro validation before report generation
 - Rich report editing, rich/plain clipboard copying, HTML export, and text export
 - Bounded JSON backup/import with regenerated internal IDs
@@ -53,18 +53,15 @@ Date/time fields:
 
 The Date/Time dialog builds supported expressions. Units are `minutes`, `hours`, `days`, `weeks`, `months`, and `years`.
 
-Each snippet also defines its own field from its abbreviation. A snippet named `timing` provides `{timing}`. Feedback choices are entered one per line:
+Each snippet also defines its own field from its abbreviation. A snippet named `timing` provides `{timing}`. Use **Add Option** in the snippet editor to define labels such as “Too Fast” and “Too Slow” with their default feedback comments.
 
-```text
-Too Fast | The delivery was too fast. Slow down and give each point more space.
-Too Slow | The delivery was too slow. Increase the pace and prioritise key points.
-```
-
-After selecting the snippet, choose the applicable feedback and insert `{timing}` into the Report Template. Generating the report replaces both report-level and snippet-level fields. Snippets without choices use their Default Feedback and remain compatible with the earlier workflow.
+Selecting **Add to Report** inserts `{timing}` at the template cursor automatically. Tick every applicable feedback option and optionally add a report-specific comment beside it. Generating the report replaces both report-level and snippet-level fields. Snippets without options use their Default Feedback and remain compatible with the earlier workflow.
 
 ## Backup format
 
-Backups are UTF-8 JSON and include the application version, build date, report template, snippet choices, selected feedback values, and state schema version. The current state schema is version `3`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
+Backups are UTF-8 JSON and include the application version, build date, report template, snippet options, selected feedback values/comments, and state schema version. The current state schema is version `4`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
+
+Report templates, generated output, selected snippets, and feedback selections start blank on each page load. The reusable snippet library and stored report details remain saved.
 
 Keep a recent backup outside the project folder if the snippet library contains important working data.
 
@@ -82,7 +79,7 @@ Keep a recent backup outside the project folder if the snippet library contains 
 3. Import a current backup and earlier schema-1/schema-2 backups.
 4. Test search with Arrow keys, Enter, Escape, Collection, and Purpose filters.
 5. Confirm editing a recently used snippet preserves its Recents position.
-6. Define a snippet with multiple feedback choices, select a value, and insert its field into a template.
+6. Define a snippet with multiple feedback options, add it to a report, tick multiple values, and enter optional comments.
 7. Validate required and unknown fields, including an empty Date/Time offset.
 8. Generate, edit, copy, save as HTML/text, print, and restore a report.
 9. Check keyboard reordering and a narrow/mobile-width layout.
