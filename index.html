@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.2.0">
+  <meta name="application-version" content="2.3.0">
   <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.2.0</title>
+  <title>Jiminy Snippet v2.3.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -79,6 +79,18 @@
 
     button.danger {
       color: var(--red);
+    }
+
+    button.danger-fill {
+      border-color: var(--red);
+      background: var(--red);
+      color: #fff;
+    }
+
+    button.danger-fill:hover {
+      border-color: #8f3128;
+      background: #8f3128;
+      color: #fff;
     }
 
     button.icon {
@@ -464,7 +476,7 @@
 
     .choice-editor-row {
       display: grid;
-      grid-template-columns: minmax(120px, 0.7fr) minmax(180px, 1.3fr) auto;
+      grid-template-columns: auto minmax(180px, 1fr) auto;
       gap: 8px;
       align-items: center;
     }
@@ -870,14 +882,14 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.2.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.3.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
           <button type="button" id="exportBtn" title="Export snippets and app data">Backup Data</button>
           <button type="button" id="importBtn" title="Import saved app data">Import Data</button>
           <button type="button" id="resetBtn" class="danger" title="Restore starter snippets">Reset</button>
-          <button type="button" id="printBtn" class="primary" title="Print the report">Print</button>
+          <button type="button" id="printBtn" class="primary" title="Open report preview">Print Preview</button>
         </div>
       </div>
     </header>
@@ -986,7 +998,9 @@
               </label>
               <label>
                 Collection
-                <input id="categoryInput" placeholder="Work Habits (defaults to General)">
+                <select id="categoryInput">
+                  <option value="General">General</option>
+                </select>
               </label>
               <label class="span-2">
                 Snippet Purpose
@@ -1028,15 +1042,21 @@
               </label>
               <label>
                 Unit
-                <input id="subjectInput" placeholder="Unit name or code">
+                <select id="subjectInput">
+                  <option value="">Choose unit</option>
+                </select>
               </label>
               <label>
                 Assessment
-                <input id="assessmentInput" placeholder="Assessment task">
+                <select id="assessmentInput">
+                  <option value="">Choose assessment</option>
+                </select>
               </label>
               <label>
                 Teaching Staff
-                <input id="teacherInput" placeholder="Teaching staff name">
+                <select id="teacherInput">
+                  <option value="">Choose teaching staff</option>
+                </select>
               </label>
             </div>
             <div class="field-group">
@@ -1068,7 +1088,7 @@
               <button type="button" id="copyBtn" title="Copy the full report">Copy Report</button>
               <button type="button" id="saveReportBtn">Save HTML</button>
               <button type="button" id="saveTextBtn">Save Text</button>
-              <button type="button" id="clearReportBtn">Clear Report</button>
+              <button type="button" id="clearReportBtn" class="danger-fill">Clear Report</button>
             </div>
             <label>
               Rich Text Report
@@ -1089,14 +1109,6 @@
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-head preview-head">
-            <h2>Print Preview</h2>
-          </div>
-          <div class="panel-body">
-            <article id="printPreview" class="report-preview"></article>
-          </div>
-        </div>
       </section>
     </main>
   </div>
@@ -1200,7 +1212,7 @@
       }
     ];
 
-    const appVersion = "2.2.0";
+    const appVersion = "2.3.0";
     const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
     const stateSchemaVersion = 4;
@@ -1272,7 +1284,6 @@
       snippetFeedbackSection: document.querySelector("#snippetFeedbackSection"),
       snippetFieldControls: document.querySelector("#snippetFieldControls"),
       reportText: document.querySelector("#reportText"),
-      printPreview: document.querySelector("#printPreview"),
       printBtn: document.querySelector("#printBtn"),
       exportBtn: document.querySelector("#exportBtn"),
       importBtn: document.querySelector("#importBtn"),
@@ -1319,8 +1330,10 @@
 
     function choiceEditorRow(choice = {}) {
       return `<div class="choice-editor-row">
-        <input type="text" data-choice-label placeholder="Option" value="${escapeHtml(choice.label || "")}" aria-label="Feedback option">
-        <input type="text" data-choice-text placeholder="Default comment" value="${escapeHtml(choice.text || "")}" aria-label="Default feedback comment">
+        <input type="checkbox" checked disabled aria-hidden="true">
+        <input type="text" data-choice-label placeholder="Feedback option" value="${escapeHtml(choice.label || "")}" aria-label="Feedback option">
+        <input type="hidden" data-original-choice-label value="${escapeHtml(choice.label || "")}">
+        <input type="hidden" data-original-choice-text value="${escapeHtml(choice.text || "")}">
         <button type="button" data-remove-choice aria-label="Remove feedback option">Remove</button>
       </div>`;
     }
@@ -1333,10 +1346,12 @@
     }
 
     function readChoiceEditor() {
-      return normalizeChoices([...els.choiceEditorList.querySelectorAll(".choice-editor-row")].map(row => ({
-        label: row.querySelector("[data-choice-label]").value,
-        text: row.querySelector("[data-choice-text]").value
-      })));
+      return normalizeChoices([...els.choiceEditorList.querySelectorAll(".choice-editor-row")].map(row => {
+        const label = row.querySelector("[data-choice-label]").value.trim();
+        const originalLabel = row.querySelector("[data-original-choice-label]").value;
+        const originalText = row.querySelector("[data-original-choice-text]").value;
+        return { label, text: label === originalLabel && originalText ? originalText : label };
+      }));
     }
 
     function normalizeSnippetValue(value) {
@@ -1488,6 +1503,16 @@
     function getCategories() {
       return [...new Set(state.snippets.map(snippet => snippet.category).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b));
+    }
+
+    function renderCategoryInput(selected = els.categoryInput.value) {
+      const categories = [...new Set(["General", ...getCategories(), selected].filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+      els.categoryInput.innerHTML = categories
+        .map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+        .concat('<option value="__new__">Create new collection…</option>')
+        .join("");
+      els.categoryInput.value = categories.includes(selected) ? selected : "General";
     }
 
     function renderCategoryFilter() {
@@ -1655,24 +1680,57 @@
       }).join("");
     }
 
-    function renderPreview() {
+    function reportPreviewHtml() {
       const details = state.details;
       const fullName = titleCaseName(details.student);
       const html = sanitizeReportHtml(reportHtml());
       const body = reportPlainText()
         ? html
-        : '<p class="subtle">The report preview will appear here.</p>';
+        : "<p>No report has been generated.</p>";
 
-      els.printPreview.innerHTML = `
-        <h2>${escapeHtml(fullName || "Student Report")}</h2>
-        <div class="report-meta">
-          <div><strong>Unit:</strong> ${escapeHtml(details.subject || "-")}</div>
-          <div><strong>Assessment:</strong> ${escapeHtml(details.assessment || "-")}</div>
-          <div><strong>Teaching Staff:</strong> ${escapeHtml(details.teacher || "-")}</div>
-          <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
-        </div>
-        ${body}
-      `;
+      return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jiminy Snippet Print Preview</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #17231e; line-height: 1.55; margin: 0; background: #edf3ef; }
+    .toolbar { position: sticky; top: 0; padding: 12px 24px; background: #00583d; text-align: right; }
+    button { border: 0; border-radius: 6px; background: #ffd45a; color: #17231e; padding: 9px 18px; font: inherit; font-weight: 700; cursor: pointer; }
+    article { max-width: 850px; margin: 24px auto; padding: 40px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+    h1 { color: #00583d; margin: 0 0 8px; }
+    .meta { border-top: 4px solid #007a53; border-bottom: 1px solid #d7e1db; padding: 14px 0; margin: 0 0 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; }
+    @media print { body { background: #fff; } .toolbar { display: none; } article { margin: 0; padding: 0; box-shadow: none; max-width: none; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar"><button type="button" onclick="window.print()">Print</button></div>
+  <article>
+    <h1>${escapeHtml(fullName || "Student Report")}</h1>
+    <div class="meta">
+      <div><strong>Unit:</strong> ${escapeHtml(details.subject || "-")}</div>
+      <div><strong>Assessment:</strong> ${escapeHtml(details.assessment || "-")}</div>
+      <div><strong>Teaching Staff:</strong> ${escapeHtml(details.teacher || "-")}</div>
+      <div><strong>Date:</strong> ${escapeHtml(new Date().toLocaleDateString())}</div>
+    </div>
+    ${body}
+  </article>
+</body>
+</html>`;
+    }
+
+    function openPrintPreview() {
+      syncDetailsFromInputs();
+      const previewWindow = window.open("", "jiminy-snippet-preview", "width=960,height=820,resizable=yes,scrollbars=yes");
+      if (!previewWindow) {
+        alert("The print preview was blocked. Allow pop-ups for this page and try again.");
+        return;
+      }
+      previewWindow.document.open();
+      previewWindow.document.write(reportPreviewHtml());
+      previewWindow.document.close();
+      previewWindow.focus();
     }
 
     function syncDetailsFromInputs() {
@@ -1685,7 +1743,6 @@
       state.reportTemplate = els.reportTemplateInput.value;
       state.reportText = reportHtml();
       saveState();
-      renderPreview();
     }
 
     function renderDetails() {
@@ -1702,6 +1759,7 @@
     function storedConfig(key) {
       return {
         units: {
+          detail: "subject",
           input: els.subjectInput,
           addInput: els.unitAddInput,
           select: els.unitSelect,
@@ -1709,6 +1767,7 @@
           placeholder: "Choose unit"
         },
         assessments: {
+          detail: "assessment",
           input: els.assessmentInput,
           addInput: els.assessmentAddInput,
           select: els.assessmentSelect,
@@ -1716,6 +1775,7 @@
           placeholder: "Choose assessment"
         },
         teachingStaff: {
+          detail: "teacher",
           input: els.teacherInput,
           addInput: els.teacherAddInput,
           select: els.teacherSelect,
@@ -1728,6 +1788,22 @@
     function sortedStoredValues(key) {
       return [...new Set(state.storedDetails[key].filter(Boolean))]
         .sort((a, b) => a.localeCompare(b));
+    }
+
+    function renderReportDetailSelects() {
+      [
+        { key: "units", detail: "subject", input: els.subjectInput, placeholder: "Choose unit" },
+        { key: "assessments", detail: "assessment", input: els.assessmentInput, placeholder: "Choose assessment" },
+        { key: "teachingStaff", detail: "teacher", input: els.teacherInput, placeholder: "Choose teaching staff" }
+      ].forEach(config => {
+        const current = state.details[config.detail] || "";
+        const values = [...new Set([...sortedStoredValues(config.key), current].filter(Boolean))];
+        config.input.innerHTML = [
+          `<option value="">${config.placeholder}</option>`,
+          ...values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+        ].join("");
+        config.input.value = current;
+      });
     }
 
     function renderStoredDetails() {
@@ -1776,6 +1852,8 @@
         state.storedDetails[key].push(trimmed);
       }
       const config = storedConfig(key);
+      state.details[config.detail] = trimmed;
+      renderReportDetailSelects();
       config.input.value = trimmed;
       config.addInput.value = "";
       syncDetailsFromInputs();
@@ -1784,6 +1862,10 @@
 
     function removeStoredDetail(key, value) {
       state.storedDetails[key] = state.storedDetails[key].filter(item => item !== value);
+      const config = storedConfig(key);
+      if (state.details[config.detail] === value) state.details[config.detail] = "";
+      renderReportDetailSelects();
+      renderDetails();
       saveState();
       renderStoredDetails();
     }
@@ -1791,19 +1873,21 @@
     function renderAll() {
       renderCategoryFilter();
       renderCollections();
+      renderCategoryInput();
       renderSnippets();
       renderSelected();
       renderSnippetFields();
+      renderReportDetailSelects();
       renderDetails();
       renderStoredDetails();
       renderPanelStates();
-      renderPreview();
     }
 
     function resetSnippetForm() {
       els.snippetFormTitle.textContent = "New Snippet";
       els.snippetId.value = "";
       els.snippetForm.reset();
+      renderCategoryInput("General");
       renderChoiceEditor();
       els.keywordInput.focus();
     }
@@ -1814,7 +1898,7 @@
       els.snippetFormTitle.textContent = `Snippet: ${snippet.keyword || "(Untitled)"}`;
       els.snippetId.value = snippet.id;
       els.keywordInput.value = snippet.keyword;
-      els.categoryInput.value = snippet.category;
+      renderCategoryInput(snippet.category);
       els.contentTypeInput.value = snippet.contentType === "Plain Text" ? "General Text" : (snippet.contentType || "General Text");
       els.textInput.value = snippet.text;
       renderChoiceEditor(snippet.choices);
@@ -1896,6 +1980,9 @@
       ));
       if (els.categoryFilter.value === name) {
         els.categoryFilter.value = "";
+      }
+      if (els.categoryInput.value === name) {
+        els.categoryInput.value = "General";
       }
       saveState();
       renderAll();
@@ -2293,6 +2380,11 @@
     });
 
     els.keywordInput.addEventListener("input", () => els.keywordInput.setCustomValidity(""));
+    els.categoryInput.addEventListener("change", () => {
+      if (els.categoryInput.value !== "__new__") return;
+      const name = prompt("New collection name:", "");
+      renderCategoryInput(name?.trim() || "General");
+    });
     els.textInput.addEventListener("input", () => els.textInput.setCustomValidity(""));
 
     els.addChoiceBtn.addEventListener("click", () => {
@@ -2540,10 +2632,18 @@
     els.cancelEditBtn.addEventListener("click", resetSnippetForm);
     els.newSnippetBtn.addEventListener("click", resetSnippetForm);
     els.clearReportBtn.addEventListener("click", () => {
-      els.reportText.innerHTML = "";
-      syncDetailsFromInputs();
+      if (!confirm("Clear all Report Details, the template, selected snippets, feedback choices, and generated report?")) return;
+      state.details = { student: "", subject: "", assessment: "", teacher: "" };
+      state.reportTemplate = "";
+      state.reportText = "";
+      state.selectedIds = [];
+      state.snippetValues = {};
+      els.validationSummary.classList.add("hidden");
+      saveState();
+      renderAll();
+      els.studentInput.focus();
     });
-    els.printBtn.addEventListener("click", () => window.print());
+    els.printBtn.addEventListener("click", openPrintPreview);
     els.saveReportBtn.addEventListener("click", exportReportText);
     els.saveTextBtn.addEventListener("click", exportReportPlainText);
     els.copyBtn.addEventListener("click", async () => {

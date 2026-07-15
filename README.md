@@ -2,7 +2,7 @@
 
 Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports reusable snippet collections, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
-Current release: **v2.2.0 — 15 July 2026**
+Current release: **v2.3.0 — 15 July 2026**
 
 ## Canonical workspace
 
@@ -25,14 +25,17 @@ The working library is stored in browser local storage under `student-report-tex
 ## Current capabilities
 
 - Snippet collections, text search, Purpose filtering, Recents ordering, and keyboard selection
+- Collection dropdowns in the snippet editor, with a Create New Collection option
 - General Text and Student Report Comment snippet purposes
 - Report templates with student, unit, assessment, teaching-staff, date, time, and date-math fields
 - Snippet-specific checkbox feedback, optional comments, and insertable fields such as `{timing}`
+- Stored Unit, Assessment, and Teaching Staff dropdowns in Report Details
 - Missing-field and unknown-macro validation before report generation
 - Rich report editing, rich/plain clipboard copying, HTML export, and text export
 - Bounded JSON backup/import with regenerated internal IDs
 - Mouse and keyboard reordering of selected snippets
 - Accessible collection controls, result lists, validation messages, and formatting state
+- Confirmed full report clearing and a separate popup print-preview window
 
 ## Report and snippet fields
 
@@ -53,7 +56,7 @@ Date/time fields:
 
 The Date/Time dialog builds supported expressions. Units are `minutes`, `hours`, `days`, `weeks`, `months`, and `years`.
 
-Each snippet also defines its own field from its abbreviation. A snippet named `timing` provides `{timing}`. Use **Add Option** in the snippet editor to define labels such as “Too Fast” and “Too Slow” with their default feedback comments.
+Each snippet also defines its own field from its abbreviation. A snippet named `timing` provides `{timing}`. Use **Add Option** in the snippet editor to create checkbox-style options such as “Too Fast” and “Too Slow.”
 
 Selecting **Add to Report** inserts `{timing}` at the template cursor automatically. Tick every applicable feedback option and optionally add a report-specific comment beside it. Generating the report replaces both report-level and snippet-level fields. Snippets without options use their Default Feedback and remain compatible with the earlier workflow.
 
@@ -83,3 +86,4 @@ Keep a recent backup outside the project folder if the snippet library contains 
 7. Validate required and unknown fields, including an empty Date/Time offset.
 8. Generate, edit, copy, save as HTML/text, print, and restore a report.
 9. Check keyboard reordering and a narrow/mobile-width layout.
+10. Confirm Clear Report wipes the active report after prompting and Print Preview opens a separate window.

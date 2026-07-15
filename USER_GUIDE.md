@@ -28,6 +28,8 @@ In **Report Details and Template**, enter:
 - **Assessment**: The assessment task name.
 - **Teaching Staff**: The staff member name.
 
+Student remains a free-text field. Unit, Assessment, and Teaching Staff are dropdowns populated from **Stored Report Details**.
+
 These are report-level fields. Insert them into the **Report Template** using the buttons directly beneath the details.
 
 Student names are cleaned up when snippets are generated. For example, `john smith` becomes `John Smith`.
@@ -49,17 +51,16 @@ Use the menu button in the **Collections** or **Stored Report Details** header t
 1. Select **New** in the **My Snippets** panel.
 2. Enter an **Abbreviation**.
    Example: `timing`
-3. Enter a **Collection**.
-   Example: `Work Habits`
+3. Choose a **Collection** from the dropdown. Select **Create new collection…** when a new collection is required.
 4. Choose a **Snippet Purpose**.
    For most assessment reports, use **Student Report Comment**. Use **General Text** for reusable text that is not specifically a student report comment. The Purpose filter can show either type in the library.
 5. Add **Default Feedback**. This is the fallback when the snippet has no choices.
-6. Optionally select **Add Option** under **Feedback Options**. Enter an option label, such as **Too Fast**, and its default feedback comment. Add as many options as the snippet requires.
+6. Optionally select **Add Option** under **Feedback Options**. Each option appears as a checkbox-style row; enter a label such as **Too Fast** or **Too Slow**. Add as many options as the snippet requires.
 
    Default Feedback is optional when at least one feedback option is provided.
 7. Select **Save Snippet**.
 
-If you type a new collection name while editing or creating a snippet, that collection is created automatically. After saving, Jiminy Snippet switches to that collection so you can confirm the snippet moved there.
+After saving, Jiminy Snippet switches to the selected collection so you can confirm the snippet moved there.
 
 To delete a collection, select the `x` beside the collection name in the **Collections** panel. Snippets in that collection are kept and moved to `General`.
 
@@ -132,7 +133,7 @@ After adding report information, writing the template, and selecting snippets:
 1. Select **Generate Report**.
 2. Report-level fields are replaced with Student, Unit, Assessment, Teaching Staff, and Date/Time values.
 3. Snippet fields such as `{timing}` are replaced with all checked feedback options and their optional comments.
-4. The generated report appears in the rich text editor and print preview.
+4. The generated report appears in the rich text editor. Select **Print Preview** in the header to open a separate preview window.
 
 If the Report Template is blank, Jiminy Snippet retains the older behavior and joins the selected snippets in the order shown under **Selected Snippet Fields**.
 
@@ -162,8 +163,8 @@ Use these buttons:
 - **Copy Report**: Copies the full report to the clipboard.
 - **Save HTML**: Downloads a permanent `.html` report file with formatting preserved.
 - **Save Text**: Downloads a plain `.txt` report file.
-- **Print**: Opens the browser print dialog. You can print to paper or save as PDF.
-- **Clear Report**: Clears the current report text.
+- **Print Preview**: Opens the formatted report in a separate window with its own Print button.
+- **Clear Report**: After confirmation, clears Student, Unit, Assessment, Teaching Staff, the template, selected snippets, feedback selections, and generated report. Stored reusable values are retained.
 
 For permanent storage, **Save HTML** keeps the student metadata and rich text formatting. Use **Save Text** when you need a simple plain text copy.
 
