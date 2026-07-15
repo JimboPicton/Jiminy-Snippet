@@ -16,19 +16,19 @@ The app has three main working areas:
 
 - **Collections**: Groups of snippets, such as Work Habits, Writing, Analysis, or Achievement.
 - **Stored Report Details**: Saved Units, Assessment items, and Teaching Staff values.
-- **My Snippets**: The list of reusable comments. Each snippet has an abbreviation and a comment.
-- **Report Information and Report Editor**: Student details, selected snippets, generated report text, rich text editing, preview, print, and save options.
+- **My Snippets**: Reusable feedback fields. Each snippet has an abbreviation, default feedback, and optional feedback choices.
+- **Report Details and Template**: Report-level details, the report template, selected snippet feedback fields, generated rich text, preview, print, and save options.
 
-## 3. Add Report Information
+## 3. Add Report Details
 
-In **Report Information**, enter:
+In **Report Details and Template**, enter:
 
 - **Student**: The student name.
 - **Unit**: The unit name or code.
 - **Assessment**: The assessment task name.
 - **Teaching Staff**: The staff member name.
 
-These fields can automatically populate snippets that use dynamic fields.
+These are report-level fields. Insert them into the **Report Template** using the buttons directly beneath the details.
 
 Student names are cleaned up when snippets are generated. For example, `john smith` becomes `John Smith`.
 
@@ -53,19 +53,26 @@ Use the menu button in the **Collections** or **Stored Report Details** header t
    Example: `Work Habits`
 4. Choose a **Snippet Purpose**.
    For most assessment reports, use **Student Report Comment**. Use **General Text** for reusable text that is not specifically a student report comment. The Purpose filter can show either type in the library.
-5. Write the expanded comment.
-   Example: `Please look at your timing and aim to pace your responses more evenly.`
-6. Select **Save Snippet**.
+5. Add **Default Feedback**. This is the fallback when the snippet has no choices.
+6. Optionally add **Feedback Choices**, one per line in `Label | expanded feedback` format.
+
+   ```text
+   Too Fast | The delivery was too fast. Slow down and give each point more space.
+   Too Slow | The delivery was too slow. Increase the pace and prioritise key points.
+   ```
+
+   A line without `|` uses the label itself as the inserted feedback. Default Feedback is optional when at least one choice is provided.
+7. Select **Save Snippet**.
 
 If you type a new collection name while editing or creating a snippet, that collection is created automatically. After saving, Jiminy Snippet switches to that collection so you can confirm the snippet moved there.
 
 To delete a collection, select the `x` beside the collection name in the **Collections** panel. Snippets in that collection are kept and moved to `General`.
 
-## 5. Use Dynamic Fields In Snippets
+## 5. Build A Report Template
 
-Dynamic fields are placeholders that are replaced with report information when you generate the report.
+The Report Template contains the general wording and structure of the report. Fields are replaced when you select **Generate Report**.
 
-Available fields:
+Report-level fields include:
 
 - `{name}`
 - `{fullname}`
@@ -80,21 +87,34 @@ Available fields:
 
 `{fullname}` uses the full Student field in title case. For example, `john smith` becomes `John Smith`.
 
-Example snippet:
+Example template:
 
 ```text
-{name} demonstrated excellent effort in {unit} and should continue applying feedback before submitting {assessment}.
+Hello {name}
+
+Well done on delivering a good submission for {assessment}.
+
+Areas to work on include:
+1. {timing}
+
+I look forward to your next submission.
+
+All the best,
+Jim
 ```
 
-When generated, this might become:
+Here `{timing}` is a snippet field. It becomes available after selecting the Timing snippet.
 
 ```text
-John demonstrated excellent effort in ENG101 and should continue applying feedback before submitting Essay 1.
+Hello John
+
+Well done on delivering a good submission for Assignment 1.
+
+Areas to work on include:
+1. The delivery was too fast. Slow down and give each point more space.
 ```
 
-Use the **Insert Field** buttons to add fields into a snippet without typing them manually.
-
-Use **Date/Time…** to build date and time fields with an optional offset. Examples include `{date:7:days}`, `{date:-2:weeks}`, and `{datetime:90:minutes}`. An offset of `0` inserts the current date or time. Supported units are minutes, hours, days, weeks, months, and years.
+Use the **Insert Report Field** buttons above the template for general fields. Use **Date/Time…** for date and time fields with optional offsets such as `{date:7:days}`, `{date:-2:weeks}`, and `{datetime:90:minutes}`.
 
 Before a report is generated, Jiminy Snippet identifies unknown fields and any report information required by the selected snippets. Correct the highlighted fields, then generate again.
 
@@ -104,18 +124,22 @@ Before a report is generated, Jiminy Snippet identifies unknown fields and any r
 2. In Search, use **Up** and **Down** to browse results, **Enter** to select the active result, and **Escape** to clear the query.
 3. Use the **Collections** panel to filter by collection.
 4. Select **Select** on each snippet you want to include.
-5. Selected snippets appear under **Selected Abbreviations**.
-6. Drag selected abbreviations left or right to change the report sequence, or focus one and use **Alt+Left** or **Alt+Right**.
-7. Select the `x` on a selected abbreviation to remove it.
+5. Selected snippets appear under **Selected Snippet Fields** and **Snippet Feedback Fields**.
+6. Choose the applicable feedback value, such as **Too Fast** or **Too Slow**.
+7. Select **Insert `{field}`** to place the snippet field at the cursor in the Report Template.
+8. Drag selected abbreviations left or right to change fallback report order, or focus one and use **Alt+Left** or **Alt+Right**.
+9. Select the `x` on a selected abbreviation to remove it.
 
 ## 7. Generate A Report
 
-After adding report information and selecting snippets:
+After adding report information, writing the template, and selecting snippets:
 
 1. Select **Generate Report**.
-2. Jiminy Snippet creates a report from the selected snippets in the order shown under **Selected Abbreviations**.
-3. Dynamic fields are replaced with the Student, Unit, Assessment, Teaching Staff, and Date values.
-4. The generated report appears in the rich text editor and the print preview.
+2. Report-level fields are replaced with Student, Unit, Assessment, Teaching Staff, and Date/Time values.
+3. Snippet fields such as `{timing}` are replaced with the selected feedback choice.
+4. The generated report appears in the rich text editor and print preview.
+
+If the Report Template is blank, Jiminy Snippet retains the older behavior and joins the selected snippets in the order shown under **Selected Snippet Fields**.
 
 ## 8. Edit The Report With Rich Text
 
@@ -158,22 +182,25 @@ Use these options in the top toolbar:
 
 Backups also include saved Units, Assessment items, and Teaching Staff. Keep backup files somewhere safe if you plan to use Jiminy Snippet across different computers or browsers.
 
-The current backup state schema is version 2. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
+The current backup state schema is version 3. Backups include the Report Template, snippet choices, and selected feedback values. Imports are limited to 2 MB and 5,000 snippets. Jiminy Snippet sanitises imported rich text and regenerates internal snippet IDs.
 
 ## 11. Suggested Workflow
 
 1. Add or review your snippet library.
 2. Enter Student, Unit, Assessment, and Teaching Staff.
-3. Select the snippets that apply to the student.
-4. Generate the report.
-5. Edit the generated text with the rich text editor.
-6. Save the report as `.html` for formatted storage or `.txt` for plain text storage.
-7. Print or save as PDF if required.
+3. Write or reuse a Report Template.
+4. Select the snippets that apply to the student.
+5. Choose each snippet's feedback and insert its field into the template.
+6. Generate the report.
+7. Edit the generated text with the rich text editor.
+8. Save the report as `.html` for formatted storage or `.txt` for plain text storage.
+9. Print or save as PDF if required.
 
 ## 12. Tips
 
 - Use short, memorable abbreviations such as `timing`, `evidence`, `proofread`, or `next-steps`.
 - Use collections to organise snippets by feedback type.
 - Use `{name}` for a warmer personal tone, and `{fullname}` when the full student name is needed.
-- Use dynamic fields when a comment should include the student, unit, assessment, teaching staff, or date.
+- Use report-level fields for student, unit, assessment, teaching staff, and date information.
+- Use snippet fields for specific feedback points such as timing, evidence, or structure.
 - Backup your data before resetting the snippet library.

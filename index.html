@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.0.0">
+  <meta name="application-version" content="2.1.0">
   <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.0.0</title>
+  <title>Jiminy Snippet v2.1.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -423,6 +423,38 @@
       font-size: 12px;
     }
 
+    .snippet-field-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .snippet-field-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fbf9;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .snippet-field-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .snippet-field-head code {
+      color: var(--cqu-green-dark);
+      font-weight: 800;
+    }
+
+    .template-input {
+      min-height: 220px;
+      line-height: 1.55;
+    }
+
     .rich-editor-shell {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -744,6 +776,7 @@
 
       .form-grid,
       .search-row,
+      .snippet-field-controls,
       .report-meta {
         grid-template-columns: 1fr;
       }
@@ -790,7 +823,7 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.0.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.1.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
@@ -915,20 +948,14 @@
                   <option value="Student Report Comment">Student Report Comment</option>
                 </select>
               </label>
-              <div class="span-2 field-group">
-                  <span class="field-group-label">Insert Field</span>
-                  <div class="field-toolbar" role="group" aria-label="Insert field into snippet">
-                    <button type="button" data-field="{name}" title="Insert the student's first name">First Name</button>
-                    <button type="button" data-field="{fullname}" title="Insert the student's full name">Full Name</button>
-                    <button type="button" data-field="{unit}" title="Insert the unit">Unit</button>
-                    <button type="button" data-field="{assessment}" title="Insert the assessment">Assessment</button>
-                    <button type="button" data-field="{teachingStaff}" title="Insert the teaching staff name">Teaching Staff</button>
-                    <button type="button" id="dateMacroBtn" title="Build and insert a date or time field">Date/Time&hellip;</button>
-                  </div>
-              </div>
               <label class="span-2">
-                Expanded Comment
-                <textarea id="textInput" required rows="7" placeholder="Please look at your timing. Use {name}, {fullname}, {unit}, {assessment}, {teachingStaff}, or {date} for dynamic fields."></textarea>
+                Default Feedback
+                <textarea id="textInput" rows="5" placeholder="Please review your timing. Optional when feedback choices are provided."></textarea>
+              </label>
+              <label class="span-2">
+                Feedback Choices
+                <textarea id="choicesInput" rows="5" placeholder="Too Fast | Slow down and give each point more space.&#10;Too Slow | Increase the pace and prioritise the key points."></textarea>
+                <span class="search-hint">Optional. Enter one choice per line as Label | expanded feedback. A label without a | uses the label itself as the feedback.</span>
               </label>
             </div>
             <div class="snippet-actions">
@@ -942,7 +969,7 @@
       <section class="report-shell">
         <div class="panel compose-panel">
           <div class="panel-head">
-            <h2>Report Information</h2>
+            <h2>Report Details and Template</h2>
           </div>
           <div class="panel-body">
             <div class="form-grid">
@@ -963,11 +990,31 @@
                 <input id="teacherInput" placeholder="Teaching staff name">
               </label>
             </div>
+            <div class="field-group">
+              <span class="field-group-label">Insert Report Field</span>
+              <div class="field-toolbar" role="group" aria-label="Insert report-level field into template">
+                <button type="button" data-template-field="{name}" title="Insert the student's first name">First Name</button>
+                <button type="button" data-template-field="{fullname}" title="Insert the student's full name">Full Name</button>
+                <button type="button" data-template-field="{unit}" title="Insert the unit">Unit</button>
+                <button type="button" data-template-field="{assessment}" title="Insert the assessment">Assessment</button>
+                <button type="button" data-template-field="{teachingStaff}" title="Insert the teaching staff name">Teaching Staff</button>
+                <button type="button" id="dateMacroBtn" title="Build and insert a date or time field">Date/Time&hellip;</button>
+              </div>
+            </div>
             <label>
-              Selected Abbreviations
+              Report Template
+              <textarea id="reportTemplateInput" class="template-input" rows="10" placeholder="Hello {name}&#10;&#10;Well done on delivering a good submission for {assessment}.&#10;&#10;Areas to work on include:&#10;1. {timing}&#10;&#10;I look forward to your next submission.&#10;&#10;All the best,&#10;Jim"></textarea>
+            </label>
+            <label>
+              Selected Snippet Fields
               <div id="selectedSnippets" class="selected-row" aria-describedby="selectedHint"></div>
             </label>
-            <p id="selectedHint" class="search-hint">Drag to reorder, or focus a snippet and use Alt+Left or Alt+Right.</p>
+            <p id="selectedHint" class="search-hint">Selected snippets provide fields for the template. Drag to reorder fallback output, or use Alt+Left and Alt+Right.</p>
+            <div class="field-group">
+              <span class="field-group-label">Snippet Feedback Fields</span>
+              <div id="snippetFieldControls" class="snippet-field-controls"></div>
+              <p class="search-hint">Choose the feedback for each selected snippet, then insert its field into the report template.</p>
+            </div>
             <div id="validationSummary" class="validation-summary hidden" role="alert" tabindex="-1"></div>
             <div class="compose-actions">
               <button type="button" id="generateBtn" class="primary">Generate Report</button>
@@ -1013,7 +1060,7 @@
     <form id="dateMacroForm" class="dialog-body" method="dialog">
       <div>
         <h2 id="dateMacroTitle">Insert Date/Time Field</h2>
-        <p class="subtle">Choose the output and an optional offset. The preview uses your browser locale.</p>
+        <p class="subtle">Choose the output and an optional offset to insert into the report template. The preview uses your browser locale.</p>
       </div>
       <div class="form-grid">
         <label>
@@ -1063,7 +1110,11 @@
         keyword: "timing",
         category: "Work Habits",
         contentType: "Student Report Comment",
-        text: "{student} should look at timing and aim to pace responses more evenly across {assessment}."
+        text: "Aim to pace the response more evenly across {assessment}.",
+        choices: [
+          { label: "Too Fast", text: "The delivery was too fast. Slow down and give each point more space." },
+          { label: "Too Slow", text: "The delivery was too slow. Increase the pace and prioritise the key points." }
+        ]
       },
       {
         id: createId(),
@@ -1102,10 +1153,10 @@
       }
     ];
 
-    const appVersion = "2.0.0";
+    const appVersion = "2.1.0";
     const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
-    const stateSchemaVersion = 2;
+    const stateSchemaVersion = 3;
 
     const state = {
       appVersion,
@@ -1124,6 +1175,8 @@
         assessments: [],
         teachingStaff: []
       },
+      reportTemplate: "",
+      snippetValues: {},
       collapsedPanels: {},
       reportText: ""
     };
@@ -1142,6 +1195,7 @@
       categoryInput: document.querySelector("#categoryInput"),
       contentTypeInput: document.querySelector("#contentTypeInput"),
       textInput: document.querySelector("#textInput"),
+      choicesInput: document.querySelector("#choicesInput"),
       collectionList: document.querySelector("#collectionList"),
       libraryStatus: document.querySelector("#libraryStatus"),
       cancelEditBtn: document.querySelector("#cancelEditBtn"),
@@ -1165,6 +1219,8 @@
       saveTextBtn: document.querySelector("#saveTextBtn"),
       clearReportBtn: document.querySelector("#clearReportBtn"),
       validationSummary: document.querySelector("#validationSummary"),
+      reportTemplateInput: document.querySelector("#reportTemplateInput"),
+      snippetFieldControls: document.querySelector("#snippetFieldControls"),
       reportText: document.querySelector("#reportText"),
       printPreview: document.querySelector("#printPreview"),
       printBtn: document.querySelector("#printBtn"),
@@ -1197,6 +1253,47 @@
       teacher: { input: "teacherInput", label: "Teaching Staff" }
     };
 
+    function normalizeChoices(choices) {
+      if (!Array.isArray(choices)) return [];
+      return choices.slice(0, 100).map(choice => {
+        if (typeof choice === "string") {
+          const value = choice.trim();
+          return value ? { label: value, text: value } : null;
+        }
+        if (!choice || typeof choice !== "object") return null;
+        const label = String(choice.label || "").trim().slice(0, 120);
+        const text = String(choice.text || label).trim().slice(0, 20000);
+        return label && text ? { label, text } : null;
+      }).filter(Boolean);
+    }
+
+    function parseChoiceLines(value) {
+      return normalizeChoices(String(value || "").split(/\r?\n/).map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+        const separator = trimmed.indexOf("|");
+        if (separator < 0) return { label: trimmed, text: trimmed };
+        return {
+          label: trimmed.slice(0, separator).trim(),
+          text: trimmed.slice(separator + 1).trim()
+        };
+      }));
+    }
+
+    function formatChoiceLines(choices) {
+      return normalizeChoices(choices).map(choice => (
+        choice.label === choice.text ? choice.label : `${choice.label} | ${choice.text}`
+      )).join("\n");
+    }
+
+    function snippetToken(keyword) {
+      return String(keyword || "snippet")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "snippet";
+    }
+
     function loadState() {
       const saved = localStorage.getItem(storageKey);
       if (!saved) {
@@ -1212,6 +1309,7 @@
           ? data.snippets.map(snippet => ({
               ...snippet,
               contentType: snippet.contentType === "Plain Text" ? "General Text" : (snippet.contentType || "General Text"),
+              choices: normalizeChoices(snippet.choices),
               useCount: Number.isFinite(snippet.useCount) ? snippet.useCount : 0,
               lastUsedAt: Number.isFinite(snippet.lastUsedAt) ? snippet.lastUsedAt : 0
             }))
@@ -1222,6 +1320,10 @@
           ...state.storedDetails,
           ...(data.storedDetails || {})
         };
+        state.reportTemplate = typeof data.reportTemplate === "string" ? data.reportTemplate : "";
+        state.snippetValues = data.snippetValues && typeof data.snippetValues === "object"
+          ? Object.fromEntries(Object.entries(data.snippetValues).map(([id, value]) => [String(id), Math.max(0, Number(value) || 0)]))
+          : {};
         state.collapsedPanels = {
           ...state.collapsedPanels,
           ...(data.collapsedPanels || {})
@@ -1371,7 +1473,8 @@
         .filter(snippet => !purpose || snippet.contentType === purpose)
         .filter(snippet => {
           if (!query) return true;
-          return `${snippet.keyword} ${snippet.category} ${snippet.text}`.toLowerCase().includes(query);
+          const choiceText = normalizeChoices(snippet.choices).map(choice => `${choice.label} ${choice.text}`).join(" ");
+          return `${snippet.keyword} ${snippet.category} ${snippet.text} ${choiceText}`.toLowerCase().includes(query);
         });
       return snippets.sort((a, b) => query
         ? a.keyword.localeCompare(b.keyword)
@@ -1402,7 +1505,8 @@
               </div>
             </div>
             <div class="category">Abbreviation: ${escapeHtml(snippet.keyword)}</div>
-            <div class="snippet-text">${escapeHtml(snippet.text)}</div>
+            <div class="snippet-text">${escapeHtml(snippet.text || normalizeChoices(snippet.choices)[0]?.text || "")}</div>
+            ${snippet.choices?.length ? `<div class="category">${snippet.choices.length} feedback choice${snippet.choices.length === 1 ? "" : "s"}</div>` : ""}
             <div class="mini-actions">
               <button type="button" data-action="toggle" data-id="${safeId}">${selected ? "Remove" : "Select"}</button>
               <button type="button" data-action="edit" data-id="${safeId}" aria-label="Edit ${escapeHtml(snippet.keyword || "untitled snippet")}">Edit</button>
@@ -1429,6 +1533,46 @@
           <button type="button" title="Remove ${escapeHtml(snippet.keyword)}" aria-label="Remove ${escapeHtml(snippet.keyword)}" data-remove="${escapeHtml(snippet.id)}">&times;</button>
         </span>
       `).join("");
+    }
+
+    function selectedSnippetValue(snippet) {
+      const choices = normalizeChoices(snippet.choices);
+      if (!choices.length) return snippet.text || "";
+      const storedIndex = Math.max(0, Number(state.snippetValues[snippet.id]) || 0);
+      const choice = choices[Math.min(storedIndex, choices.length - 1)] || choices[0];
+      return choice.text;
+    }
+
+    function renderSnippetFields() {
+      const selected = state.selectedIds
+        .map(id => state.snippets.find(snippet => snippet.id === id))
+        .filter(Boolean);
+
+      if (!selected.length) {
+        els.snippetFieldControls.innerHTML = '<span class="subtle">Select a snippet to add its feedback field.</span>';
+        return;
+      }
+
+      els.snippetFieldControls.innerHTML = selected.map(snippet => {
+        const choices = normalizeChoices(snippet.choices);
+        const token = snippetToken(snippet.keyword);
+        const selectedIndex = Math.min(Math.max(0, Number(state.snippetValues[snippet.id]) || 0), Math.max(0, choices.length - 1));
+        const control = choices.length
+          ? `<label>Feedback
+              <select data-snippet-choice="${escapeHtml(snippet.id)}">
+                ${choices.map((choice, index) => `<option value="${index}" ${index === selectedIndex ? "selected" : ""}>${escapeHtml(choice.label)}</option>`).join("")}
+              </select>
+            </label>`
+          : `<p class="subtle">Uses the default feedback: ${escapeHtml(snippet.text)}</p>`;
+        return `<div class="snippet-field-card">
+          <div class="snippet-field-head">
+            <strong>${escapeHtml(snippet.keyword)}</strong>
+            <code>{${escapeHtml(token)}}</code>
+          </div>
+          ${control}
+          <button type="button" data-insert-snippet-field="${escapeHtml(token)}">Insert {${escapeHtml(token)}}</button>
+        </div>`;
+      }).join("");
     }
 
     function renderPreview() {
@@ -1458,6 +1602,7 @@
         assessment: els.assessmentInput.value,
         teacher: els.teacherInput.value
       };
+      state.reportTemplate = els.reportTemplateInput.value;
       state.reportText = reportHtml();
       saveState();
       renderPreview();
@@ -1468,6 +1613,7 @@
       els.subjectInput.value = state.details.subject || "";
       els.assessmentInput.value = state.details.assessment || "";
       els.teacherInput.value = state.details.teacher || "";
+      els.reportTemplateInput.value = state.reportTemplate || "";
       els.reportText.innerHTML = state.reportText && state.reportText.includes("<")
         ? sanitizeReportHtml(state.reportText)
         : paragraphsToHtml(state.reportText || "");
@@ -1567,6 +1713,7 @@
       renderCollections();
       renderSnippets();
       renderSelected();
+      renderSnippetFields();
       renderDetails();
       renderStoredDetails();
       renderPanelStates();
@@ -1589,6 +1736,7 @@
       els.categoryInput.value = snippet.category;
       els.contentTypeInput.value = snippet.contentType === "Plain Text" ? "General Text" : (snippet.contentType || "General Text");
       els.textInput.value = snippet.text;
+      els.choicesInput.value = formatChoiceLines(snippet.choices);
       els.keywordInput.focus();
     }
 
@@ -1606,6 +1754,7 @@
       saveState();
       renderSnippets();
       renderSelected();
+      renderSnippetFields();
     }
 
     function reorderSelectedSnippet(draggedId, targetId) {
@@ -1617,6 +1766,7 @@
       state.selectedIds = nextIds;
       saveState();
       renderSelected();
+      renderSnippetFields();
       renderSnippets();
     }
 
@@ -1629,6 +1779,7 @@
       state.selectedIds = nextIds;
       saveState();
       renderSelected();
+      renderSnippetFields();
       renderSnippets();
       els.selectedSnippets.querySelector(`[data-selected-id="${CSS.escape(id)}"]`)?.focus();
     }
@@ -1638,6 +1789,7 @@
       if (!snippet || !confirm(`Delete snippet "${snippet.keyword}"?`)) return;
       state.snippets = state.snippets.filter(item => item.id !== id);
       state.selectedIds = state.selectedIds.filter(selectedId => selectedId !== id);
+      delete state.snippetValues[id];
       saveState();
       resetSnippetForm();
       renderAll();
@@ -1672,10 +1824,18 @@
       Object.values(detailFields).forEach(config => els[config.input].removeAttribute("aria-invalid"));
       const messages = [];
       const requiredInputs = [];
-      const names = selected.flatMap(snippet => macroNames(snippet.text));
-      const unknown = [...new Set(names.filter(name => !detailFields[name] && !isDateTimeMacro(name)))];
+      const template = els.reportTemplateInput.value.trim();
+      const snippetTokens = selected.map(snippet => snippetToken(snippet.keyword));
+      const duplicateTokens = [...new Set(snippetTokens.filter((token, index) => snippetTokens.indexOf(token) !== index))];
+      const sourceTexts = template
+        ? [template, ...selected.map(selectedSnippetValue)]
+        : selected.map(selectedSnippetValue);
+      const names = sourceTexts.flatMap(macroNames);
+      const knownSnippetTokens = new Set(snippetTokens);
+      const unknown = [...new Set(names.filter(name => !detailFields[name] && !isDateTimeMacro(name) && !knownSnippetTokens.has(name)))];
 
-      if (!selected.length) messages.push("Select at least one snippet before generating a report.");
+      if (!template && !selected.length) messages.push("Add a report template or select at least one snippet before generating a report.");
+      if (duplicateTokens.length) messages.push(`Selected snippets share the same field: ${duplicateTokens.map(name => `{${name}}`).join(", ")}.`);
       if (unknown.length) messages.push(`Unknown field${unknown.length === 1 ? "" : "s"}: ${unknown.map(name => `{${name}}`).join(", ")}.`);
 
       const usedDetails = [...new Set(names.filter(name => detailFields[name]).map(name => detailFields[name].input))];
@@ -1691,7 +1851,7 @@
       els.validationSummary.textContent = messages.join(" ");
       els.validationSummary.classList.toggle("hidden", !messages.length);
       if (messages.length) {
-        (requiredInputs[0] || els.searchInput).focus();
+        (requiredInputs[0] || (template ? els.reportTemplateInput : els.searchInput)).focus();
         return false;
       }
       return true;
@@ -1705,9 +1865,18 @@
       syncDetailsFromInputs();
       if (!validateSelectedSnippets(selected)) return;
 
-      const comments = selected.map(snippet => expandFields(snippet.text));
-      els.reportText.innerHTML = paragraphsToHtml(comments.filter(Boolean).join("\n\n"));
+      const template = els.reportTemplateInput.value.trim();
+      const source = template
+        ? expandSnippetFields(template, selected)
+        : selected.map(selectedSnippetValue).filter(Boolean).join("\n\n");
+      els.reportText.innerHTML = paragraphsToHtml(expandFields(source));
       syncDetailsFromInputs();
+    }
+
+    function expandSnippetFields(text, selected) {
+      return selected.reduce((result, snippet) => (
+        result.replaceAll(`{${snippetToken(snippet.keyword)}}`, selectedSnippetValue(snippet))
+      ), text);
     }
 
     function applyDateOffset(kind, amount, unit) {
@@ -1767,14 +1936,14 @@
       return valid;
     }
 
-    function insertField(field) {
-      const input = els.textInput;
+    function insertField(field, input = els.reportTemplateInput) {
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? input.value.length;
       input.value = `${input.value.slice(0, start)}${field}${input.value.slice(end)}`;
       const cursor = start + field.length;
       input.focus();
       input.setSelectionRange(cursor, cursor);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     function selectionIsInsideReport() {
@@ -1932,6 +2101,7 @@
               category: cleanString(snippet.category, 120) || "General",
               contentType: snippet.contentType === "Student Report Comment" ? "Student Report Comment" : "General Text",
               text: cleanString(snippet.text, 20000),
+              choices: normalizeChoices(snippet.choices),
               useCount: Math.max(0, Number(snippet.useCount) || 0),
               lastUsedAt: Math.max(0, Number(snippet.lastUsedAt) || 0)
             };
@@ -1939,6 +2109,11 @@
           state.selectedIds = Array.isArray(data.selectedIds)
             ? data.selectedIds.map(id => idMap.get(String(id))).filter(Boolean)
             : [];
+          state.snippetValues = data.snippetValues && typeof data.snippetValues === "object"
+            ? Object.fromEntries(Object.entries(data.snippetValues)
+                .map(([oldId, value]) => [idMap.get(String(oldId)), Math.max(0, Number(value) || 0)])
+                .filter(([id]) => Boolean(id)))
+            : {};
           const importedDetails = data.details && typeof data.details === "object" ? data.details : {};
           state.details = {
             student: cleanString(importedDetails.student, 500),
@@ -1955,6 +2130,7 @@
             ...state.collapsedPanels,
             ...(data.collapsedPanels || {})
           };
+          state.reportTemplate = cleanString(data.reportTemplate, 100000);
           state.reportText = sanitizeReportHtml(cleanString(data.reportText, 100000));
           saveState();
           renderAll();
@@ -1973,13 +2149,33 @@
         keyword: els.keywordInput.value.trim(),
         category: els.categoryInput.value.trim() || "General",
         contentType: els.contentTypeInput.value,
-        text: els.textInput.value.trim()
+        text: els.textInput.value.trim(),
+        choices: parseChoiceLines(els.choicesInput.value)
       };
 
-      if (!snippet.keyword || !snippet.text) return;
+      els.textInput.setCustomValidity(!snippet.text && !snippet.choices.length ? "Add default feedback or at least one feedback choice." : "");
+      if (!snippet.keyword || (!snippet.text && !snippet.choices.length)) {
+        els.textInput.reportValidity();
+        return;
+      }
+
+      const duplicate = state.snippets.find(item => (
+        item.id !== id && snippetToken(item.keyword) === snippetToken(snippet.keyword)
+      ));
+      els.keywordInput.setCustomValidity(duplicate ? `Another snippet already uses the {${snippetToken(snippet.keyword)}} field.` : "");
+      if (duplicate) {
+        els.keywordInput.reportValidity();
+        return;
+      }
 
       const existingIndex = state.snippets.findIndex(item => item.id === id);
       if (existingIndex >= 0) {
+        const oldToken = snippetToken(state.snippets[existingIndex].keyword);
+        const newToken = snippetToken(snippet.keyword);
+        if (oldToken !== newToken) {
+          state.reportTemplate = String(state.reportTemplate || "").replaceAll(`{${oldToken}}`, `{${newToken}}`);
+          els.reportTemplateInput.value = state.reportTemplate;
+        }
         state.snippets[existingIndex] = { ...state.snippets[existingIndex], ...snippet };
       } else {
         state.snippets.push(snippet);
@@ -2000,6 +2196,11 @@
       if (action === "delete") deleteSnippet(id);
     });
 
+    els.keywordInput.addEventListener("input", () => els.keywordInput.setCustomValidity(""));
+    [els.textInput, els.choicesInput].forEach(input => {
+      input.addEventListener("input", () => els.textInput.setCustomValidity(""));
+    });
+
     els.collectionList.addEventListener("click", event => {
       const deleteControl = event.target.closest("[data-delete-collection]");
       if (deleteControl) {
@@ -2015,8 +2216,21 @@
       renderSnippets();
     });
 
-    document.querySelectorAll("[data-field]").forEach(button => {
-      button.addEventListener("click", () => insertField(button.dataset.field));
+    document.querySelectorAll("[data-template-field]").forEach(button => {
+      button.addEventListener("click", () => insertField(button.dataset.templateField));
+    });
+
+    els.snippetFieldControls.addEventListener("change", event => {
+      const select = event.target.closest("select[data-snippet-choice]");
+      if (!select) return;
+      state.snippetValues[select.dataset.snippetChoice] = Math.max(0, Number(select.value) || 0);
+      saveState();
+    });
+
+    els.snippetFieldControls.addEventListener("click", event => {
+      const button = event.target.closest("button[data-insert-snippet-field]");
+      if (!button) return;
+      insertField(`{${button.dataset.insertSnippetField}}`);
     });
 
     document.querySelectorAll("[data-toggle-panel]").forEach(button => {
@@ -2156,7 +2370,7 @@
       renderSnippets();
     });
 
-    [els.studentInput, els.subjectInput, els.assessmentInput, els.teacherInput, els.reportText].forEach(input => {
+    [els.studentInput, els.subjectInput, els.assessmentInput, els.teacherInput, els.reportTemplateInput, els.reportText].forEach(input => {
       input.addEventListener("input", () => {
         input.removeAttribute("aria-invalid");
         els.validationSummary.classList.add("hidden");
@@ -2252,6 +2466,7 @@
       if (!confirm("Restore the starter snippets? Your current snippet library will be replaced.")) return;
       state.snippets = starterSnippets.map(snippet => ({ ...snippet, id: createId() }));
       state.selectedIds = [];
+      state.snippetValues = {};
       state.reportText = "";
       saveState();
       renderAll();

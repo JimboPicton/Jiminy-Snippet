@@ -2,7 +2,7 @@
 
 Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports reusable snippet collections, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
-Current release: **v2.0.0 — 15 July 2026**
+Current release: **v2.1.0 — 15 July 2026**
 
 ## Canonical workspace
 
@@ -26,16 +26,17 @@ The working library is stored in browser local storage under `student-report-tex
 
 - Snippet collections, text search, Purpose filtering, Recents ordering, and keyboard selection
 - General Text and Student Report Comment snippet purposes
-- Student, unit, assessment, teaching-staff, date, time, and date-math fields
+- Report templates with student, unit, assessment, teaching-staff, date, time, and date-math fields
+- Snippet-specific feedback choices and insertable fields such as `{timing}`
 - Missing-field and unknown-macro validation before report generation
 - Rich report editing, rich/plain clipboard copying, HTML export, and text export
 - Bounded JSON backup/import with regenerated internal IDs
 - Mouse and keyboard reordering of selected snippets
 - Accessible collection controls, result lists, validation messages, and formatting state
 
-## Dynamic fields
+## Report and snippet fields
 
-Report-detail fields:
+Report-level fields are inserted into the Report Template:
 
 - `{name}` — first name
 - `{fullname}` or `{student}` — full student name
@@ -52,9 +53,18 @@ Date/time fields:
 
 The Date/Time dialog builds supported expressions. Units are `minutes`, `hours`, `days`, `weeks`, `months`, and `years`.
 
+Each snippet also defines its own field from its abbreviation. A snippet named `timing` provides `{timing}`. Feedback choices are entered one per line:
+
+```text
+Too Fast | The delivery was too fast. Slow down and give each point more space.
+Too Slow | The delivery was too slow. Increase the pace and prioritise key points.
+```
+
+After selecting the snippet, choose the applicable feedback and insert `{timing}` into the Report Template. Generating the report replaces both report-level and snippet-level fields. Snippets without choices use their Default Feedback and remain compatible with the earlier workflow.
+
 ## Backup format
 
-Backups are UTF-8 JSON and include the application version, build date, and state schema version. The current state schema is version `2`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
+Backups are UTF-8 JSON and include the application version, build date, report template, snippet choices, selected feedback values, and state schema version. The current state schema is version `3`. Imports are limited to 2 MB and 5,000 snippets. Imported strings and rich HTML are bounded and sanitised, and internal snippet IDs are regenerated.
 
 Keep a recent backup outside the project folder if the snippet library contains important working data.
 
@@ -69,9 +79,10 @@ Keep a recent backup outside the project folder if the snippet library contains 
 
 1. Run `node verify-build.js`.
 2. Open the app in a clean browser profile and confirm the starter library loads.
-3. Import a current backup and a version-1 backup.
+3. Import a current backup and earlier schema-1/schema-2 backups.
 4. Test search with Arrow keys, Enter, Escape, Collection, and Purpose filters.
 5. Confirm editing a recently used snippet preserves its Recents position.
-6. Validate required and unknown fields, including an empty Date/Time offset.
-7. Generate, edit, copy, save as HTML/text, print, and restore a report.
-8. Check keyboard reordering and a narrow/mobile-width layout.
+6. Define a snippet with multiple feedback choices, select a value, and insert its field into a template.
+7. Validate required and unknown fields, including an empty Date/Time offset.
+8. Generate, edit, copy, save as HTML/text, print, and restore a report.
+9. Check keyboard reordering and a narrow/mobile-width layout.
