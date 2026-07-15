@@ -26,7 +26,7 @@ const timingSnippet = { id: "timingId", keyword: "Timing", text: "Review timing.
 const expandedTiming = helpers.expandSnippetFields("1. {timing}", [timingSnippet]);
 
 const checks = {
-  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.3.0">') && html.includes('const appVersion = "2.3.0"') && html.includes("v2.3.0 · 15 July 2026"),
+  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.4.0">') && html.includes('const appVersion = "2.4.0"') && html.includes("v2.4.0 · 15 July 2026"),
   "Build date metadata is consistent": html.includes('<meta name="build-date" content="2026-07-15">') && html.includes('const appBuildDate = "2026-07-15"'),
   "Purpose filter exists once": (html.match(/id="purposeFilter"/g) || []).length === 1,
   "Result list uses list semantics": html.includes('role="list"') && html.includes('role="listitem"'),
@@ -36,6 +36,8 @@ const checks = {
   "Schema 4 stores report templates and snippet values": html.includes("const stateSchemaVersion = 4") && html.includes('reportTemplate: ""') && html.includes("snippetValues: {}"),
   "Snippet choices use a checkbox-style option editor": (html.match(/id="choiceEditorList"/g) || []).length === 1 && (html.match(/id="addChoiceBtn"/g) || []).length === 1 && html.includes('<input type="checkbox" checked disabled aria-hidden="true">') && html.includes("readChoiceEditor"),
   "Snippet Collection is a synchronized dropdown": html.includes('<select id="categoryInput">') && html.includes("function renderCategoryInput") && html.includes("Create new collection…"),
+  "Configuration menu owns both management panels": html.includes('id="configMenuBtn"') && html.includes('data-open-config="collections"') && html.includes('data-open-config="storedDetails"') && !html.includes('class="sidebar-rail"'),
+  "Configuration panels float, expand, and close": (html.match(/class="panel config-floating hidden"/g) || []).length === 2 && (html.match(/data-expand-config=/g) || []).length === 2 && (html.match(/data-close-config=/g) || []).length === 2 && html.includes("function openConfigPanel") && html.includes("function closeConfigPanel"),
   "Stored report details populate report dropdowns": html.includes('<select id="subjectInput">') && html.includes('<select id="assessmentInput">') && html.includes('<select id="teacherInput">') && html.includes("function renderReportDetailSelects"),
   "Selected snippets expose feedback controls": (html.match(/id="snippetFieldControls"/g) || []).length === 1 && html.includes("renderSnippetFields"),
   "Report templates expand snippet fields": (html.match(/id="reportTemplateInput"/g) || []).length === 1 && html.includes("expandSnippetFields(template, selected)"),
@@ -43,7 +45,8 @@ const checks = {
   "Multiple checked feedback values expand with comments": expandedTiming === "1. Slow down. Increase pace. Focus on the key points.",
   "Add to Report inserts a snippet field": html.includes('toggleSnippet(id, true)') && html.includes('insertWhenAdding && !els.reportTemplateInput.value.includes(field)'),
   "Report work fields clear on page load": html.includes('state.reportTemplate = "";') && html.includes('state.reportText = "";'),
-  "Clear Report is destructive only after confirmation": html.includes('id="clearReportBtn" class="danger-fill"') && html.includes('if (!confirm("Clear all Report Details'),
+  "Clear Report is destructive only after confirmation": html.includes('id="clearReportBtn" class="danger-fill"') && html.includes('if (!confirm("Clear all Report Details') && html.includes('els.reportTemplateInput.value = ""') && html.includes('els.reportText.innerHTML = ""'),
+  "Cleared template does not display sample placeholder text": html.includes('<textarea id="reportTemplateInput" class="template-input" rows="10" aria-label="Report template"></textarea>'),
   "Print preview opens outside the main layout": html.includes("function openPrintPreview") && html.includes('window.open("", "jiminy-snippet-preview"') && !html.includes('id="printPreview"'),
   "Snippet edits preserve existing metadata": html.includes("{ ...state.snippets[existingIndex], ...snippet }"),
   "Collection counts use one-pass aggregation": html.includes("const categoryCounts = state.snippets.reduce"),

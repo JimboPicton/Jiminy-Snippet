@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.3.0">
+  <meta name="application-version" content="2.4.0">
   <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.3.0</title>
+  <title>Jiminy Snippet v2.4.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -159,7 +159,7 @@
       backdrop-filter: blur(10px);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 30;
       color: #fff;
     }
 
@@ -246,23 +246,78 @@
       font-weight: 800;
     }
 
+    .config-menu {
+      position: relative;
+    }
+
+    .config-menu-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 40;
+      width: 230px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .top-actions .config-menu-popover button {
+      width: 100%;
+      justify-content: flex-start;
+      border-color: transparent;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .top-actions .config-menu-popover button:hover {
+      border-color: var(--line);
+      background: var(--cqu-mint);
+      color: var(--cqu-green-dark);
+    }
+
     main {
       max-width: 1500px;
       width: 100%;
       margin: 0 auto;
       padding: 18px;
       display: grid;
-      grid-template-columns: 240px minmax(320px, 420px) minmax(440px, 1fr);
+      grid-template-columns: minmax(320px, 420px) minmax(440px, 1fr);
       gap: 18px;
       align-items: start;
     }
 
-    .sidebar-rail {
-      position: sticky;
-      top: 82px;
-      align-self: start;
-      display: grid;
-      gap: 14px;
+    .config-floating {
+      position: fixed;
+      top: 86px;
+      right: 24px;
+      z-index: 50;
+      width: min(420px, calc(100vw - 32px));
+      max-height: calc(100vh - 110px);
+      overflow: auto;
+    }
+
+    .config-floating.expanded {
+      top: 72px;
+      right: 50%;
+      width: min(900px, calc(100vw - 32px));
+      max-height: calc(100vh - 88px);
+      transform: translateX(50%);
+    }
+
+    .config-floating.expanded .stored-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .floating-panel-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .floating-panel-actions button {
+      min-height: 30px;
+      padding: 4px 9px;
     }
 
     .collection-list {
@@ -807,10 +862,6 @@
         grid-template-columns: 1fr;
       }
 
-      .sidebar-rail {
-        position: static;
-      }
-
       .snippet-list {
         max-height: none;
       }
@@ -823,8 +874,29 @@
       }
 
       .top-actions,
-      .top-actions button {
+      .top-actions > button,
+      .top-actions > .config-menu,
+      .top-actions > .config-menu > button {
         width: 100%;
+      }
+
+      .config-menu-popover {
+        left: 0;
+        right: auto;
+        width: 100%;
+      }
+
+      .config-floating,
+      .config-floating.expanded {
+        top: 10px;
+        right: 10px;
+        width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+        transform: none;
+      }
+
+      .config-floating.expanded .stored-grid {
+        grid-template-columns: 1fr;
       }
 
       main {
@@ -847,7 +919,7 @@
       }
 
       header,
-      .sidebar-rail,
+      .config-floating,
       .library-panel,
       .compose-panel,
       .preview-head {
@@ -882,10 +954,17 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.3.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.4.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
+          <div class="config-menu">
+            <button type="button" id="configMenuBtn" aria-haspopup="menu" aria-expanded="false">Configuration</button>
+            <div id="configMenu" class="config-menu-popover hidden" role="menu">
+              <button type="button" role="menuitem" data-open-config="collections">Collections</button>
+              <button type="button" role="menuitem" data-open-config="storedDetails">Stored Report Details</button>
+            </div>
+          </div>
           <button type="button" id="exportBtn" title="Export snippets and app data">Backup Data</button>
           <button type="button" id="importBtn" title="Import saved app data">Import Data</button>
           <button type="button" id="resetBtn" class="danger" title="Restore starter snippets">Reset</button>
@@ -894,23 +973,27 @@
       </div>
     </header>
 
-    <main>
-      <aside class="sidebar-rail">
-        <div class="panel" data-panel="collections">
+    <section id="collectionsConfigPanel" class="panel config-floating hidden" data-config-panel="collections" aria-labelledby="collectionsConfigTitle">
           <div class="panel-head">
-            <h2>Collections</h2>
-            <button type="button" class="collapse-btn" data-toggle-panel="collections" title="Collapse Collections">☰</button>
+            <h2 id="collectionsConfigTitle">Collections</h2>
+            <div class="floating-panel-actions">
+              <button type="button" data-expand-config="collections" aria-label="Expand Collections">Expand</button>
+              <button type="button" data-close-config="collections" aria-label="Close Collections">Close</button>
+            </div>
           </div>
           <div class="panel-body">
             <div id="collectionList" class="collection-list" aria-live="polite"></div>
             <p id="libraryStatus" class="subtle"></p>
           </div>
-        </div>
+    </section>
 
-        <div class="panel" data-panel="storedDetails">
+    <section id="storedDetailsConfigPanel" class="panel config-floating hidden" data-config-panel="storedDetails" aria-labelledby="storedDetailsConfigTitle">
           <div class="panel-head">
-            <h2>Stored Report Details</h2>
-            <button type="button" class="collapse-btn" data-toggle-panel="storedDetails" title="Collapse Stored Report Details">☰</button>
+            <h2 id="storedDetailsConfigTitle">Stored Report Details</h2>
+            <div class="floating-panel-actions">
+              <button type="button" data-expand-config="storedDetails" aria-label="Expand Stored Report Details">Expand</button>
+              <button type="button" data-close-config="storedDetails" aria-label="Close Stored Report Details">Close</button>
+            </div>
           </div>
           <div class="panel-body">
             <section class="stored-details" aria-label="Stored report details">
@@ -951,9 +1034,9 @@
               </div>
             </section>
           </div>
-        </div>
-      </aside>
+    </section>
 
+    <main>
       <section class="workspace library-panel">
         <div class="panel">
           <div class="panel-head">
@@ -1072,7 +1155,7 @@
             </div>
             <label>
               Report Template
-              <textarea id="reportTemplateInput" class="template-input" rows="10" placeholder="Hello {name}&#10;&#10;Well done on delivering a good submission for {assessment}.&#10;&#10;Areas to work on include:&#10;1. {timing}&#10;&#10;I look forward to your next submission.&#10;&#10;All the best,&#10;Jim"></textarea>
+              <textarea id="reportTemplateInput" class="template-input" rows="10" aria-label="Report template"></textarea>
             </label>
             <label id="selectedSnippetSection" class="hidden">
               Selected Snippet Fields
@@ -1212,7 +1295,7 @@
       }
     ];
 
-    const appVersion = "2.3.0";
+    const appVersion = "2.4.0";
     const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
     const stateSchemaVersion = 4;
@@ -1259,6 +1342,8 @@
       choiceEditorList: document.querySelector("#choiceEditorList"),
       collectionList: document.querySelector("#collectionList"),
       libraryStatus: document.querySelector("#libraryStatus"),
+      configMenuBtn: document.querySelector("#configMenuBtn"),
+      configMenu: document.querySelector("#configMenu"),
       cancelEditBtn: document.querySelector("#cancelEditBtn"),
       newSnippetBtn: document.querySelector("#newSnippetBtn"),
       studentInput: document.querySelector("#studentInput"),
@@ -1826,23 +1911,36 @@
       });
     }
 
-    function renderPanelStates() {
-      document.querySelectorAll("[data-panel]").forEach(panel => {
-        const key = panel.dataset.panel;
-        const collapsed = Boolean(state.collapsedPanels[key]);
-        panel.classList.toggle("collapsed", collapsed);
-        const button = panel.querySelector("[data-toggle-panel]");
-        if (button) {
-          button.title = `${collapsed ? "Expand" : "Collapse"} ${panel.querySelector("h2")?.textContent || "panel"}`;
-          button.setAttribute("aria-expanded", String(!collapsed));
-        }
-      });
+    function closeConfigMenu() {
+      els.configMenu.classList.add("hidden");
+      els.configMenuBtn.setAttribute("aria-expanded", "false");
     }
 
-    function togglePanel(key) {
-      state.collapsedPanels[key] = !state.collapsedPanels[key];
-      saveState();
-      renderPanelStates();
+    function setConfigPanelExpanded(panel, expanded) {
+      panel.classList.toggle("expanded", expanded);
+      const button = panel.querySelector("[data-expand-config]");
+      if (!button) return;
+      button.textContent = expanded ? "Restore" : "Expand";
+      button.setAttribute("aria-label", `${expanded ? "Restore" : "Expand"} ${panel.querySelector("h2")?.textContent || "configuration panel"}`);
+    }
+
+    function openConfigPanel(key) {
+      closeConfigMenu();
+      document.querySelectorAll("[data-config-panel]").forEach(panel => {
+        const isRequested = panel.dataset.configPanel === key;
+        panel.classList.toggle("hidden", !isRequested);
+        if (!isRequested) setConfigPanelExpanded(panel, false);
+      });
+      const panel = document.querySelector(`[data-config-panel="${key}"]`);
+      panel?.querySelector("[data-close-config]")?.focus();
+    }
+
+    function closeConfigPanel(key) {
+      const panel = document.querySelector(`[data-config-panel="${key}"]`);
+      if (!panel) return;
+      panel.classList.add("hidden");
+      setConfigPanelExpanded(panel, false);
+      els.configMenuBtn.focus();
     }
 
     function addStoredDetail(key, value) {
@@ -1880,7 +1978,6 @@
       renderReportDetailSelects();
       renderDetails();
       renderStoredDetails();
-      renderPanelStates();
     }
 
     function resetSnippetForm() {
@@ -2454,8 +2551,43 @@
       insertField(`{${button.dataset.insertSnippetField}}`);
     });
 
-    document.querySelectorAll("[data-toggle-panel]").forEach(button => {
-      button.addEventListener("click", () => togglePanel(button.dataset.togglePanel));
+    els.configMenuBtn.addEventListener("click", () => {
+      const willOpen = els.configMenu.classList.contains("hidden");
+      els.configMenu.classList.toggle("hidden", !willOpen);
+      els.configMenuBtn.setAttribute("aria-expanded", String(willOpen));
+      if (willOpen) els.configMenu.querySelector("[role=menuitem]")?.focus();
+    });
+
+    els.configMenu.addEventListener("click", event => {
+      const button = event.target.closest("[data-open-config]");
+      if (button) openConfigPanel(button.dataset.openConfig);
+    });
+
+    document.querySelectorAll("[data-config-panel]").forEach(panel => {
+      panel.addEventListener("click", event => {
+        const closeButton = event.target.closest("[data-close-config]");
+        if (closeButton) {
+          closeConfigPanel(closeButton.dataset.closeConfig);
+          return;
+        }
+        const expandButton = event.target.closest("[data-expand-config]");
+        if (expandButton) setConfigPanelExpanded(panel, !panel.classList.contains("expanded"));
+      });
+    });
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".config-menu")) closeConfigMenu();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape") return;
+      if (!els.configMenu.classList.contains("hidden")) {
+        closeConfigMenu();
+        els.configMenuBtn.focus();
+        return;
+      }
+      const panel = document.querySelector("[data-config-panel]:not(.hidden)");
+      if (panel) closeConfigPanel(panel.dataset.configPanel);
     });
 
     els.selectedSnippets.addEventListener("click", event => {
@@ -2638,6 +2770,8 @@
       state.reportText = "";
       state.selectedIds = [];
       state.snippetValues = {};
+      els.reportTemplateInput.value = "";
+      els.reportText.innerHTML = "";
       els.validationSummary.classList.add("hidden");
       saveState();
       renderAll();

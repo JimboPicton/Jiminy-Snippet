@@ -12,12 +12,11 @@ The app saves your reusable snippets and stored report details in the browser on
 
 ## 2. Understand The Main Areas
 
-The app has three main working areas:
+The app has two main working areas and a Configuration menu:
 
-- **Collections**: Groups of snippets, such as Work Habits, Writing, Analysis, or Achievement.
-- **Stored Report Details**: Saved Units, Assessment items, and Teaching Staff values.
 - **My Snippets**: Reusable feedback fields. Each snippet has an abbreviation, default feedback, and optional feedback choices.
 - **Report Details and Template**: Report-level details, the report template, selected snippet feedback fields, generated rich text, preview, print, and save options.
+- **Configuration**: Opens floating panels for Collections and Stored Report Details. Each panel can be expanded, restored, or closed.
 
 ## 3. Add Report Details
 
@@ -34,7 +33,7 @@ These are report-level fields. Insert them into the **Report Template** using th
 
 Student names are cleaned up when snippets are generated. For example, `john smith` becomes `John Smith`.
 
-You can also maintain reusable lists for **Unit**, **Assessment**, and **Teaching Staff** in **Stored Report Details** on the left side of the page under **Collections**.
+You can also maintain reusable lists for **Unit**, **Assessment**, and **Teaching Staff** by selecting **Configuration > Stored Report Details** in the top menu.
 
 To save a reusable value:
 
@@ -44,7 +43,7 @@ To save a reusable value:
 
 To use a saved value, choose it from the matching dropdown. To remove a saved value, select the `x` on its chip.
 
-Use the menu button in the **Collections** or **Stored Report Details** header to minimise or expand that box.
+Use **Expand** to enlarge the floating panel, **Restore** to return it to its normal size, or **Close** when finished.
 
 ## 4. Create A New Snippet
 
@@ -62,7 +61,7 @@ Use the menu button in the **Collections** or **Stored Report Details** header t
 
 After saving, Jiminy Snippet switches to the selected collection so you can confirm the snippet moved there.
 
-To delete a collection, select the `x` beside the collection name in the **Collections** panel. Snippets in that collection are kept and moved to `General`.
+To delete a collection, open **Configuration > Collections** and select the `x` beside the collection name. Snippets in that collection are kept and moved to `General`.
 
 ## 5. Build A Report Template
 
@@ -118,7 +117,7 @@ Before a report is generated, Jiminy Snippet identifies unknown fields and any r
 
 1. Browse **My Snippets**, or use Search, Collection, and Purpose filters. With an empty search, the most recently used snippets appear first.
 2. In Search, use **Up** and **Down** to browse results, **Enter** to select the active result, and **Escape** to clear the query.
-3. Use the **Collections** panel to filter by collection.
+3. Use the Collection dropdown above **My Snippets**, or open **Configuration > Collections** to filter by collection.
 4. Place the cursor where the feedback belongs in the Report Template, then select **Add to Report** on the snippet. Its field is inserted immediately.
 5. Selected snippets appear under **Selected Snippet Fields** and **Snippet Feedback Fields**.
 6. Tick every applicable feedback value, such as **Too Fast** or **Too Slow**.

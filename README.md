@@ -2,7 +2,7 @@
 
 Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports reusable snippet collections, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
-Current release: **v2.3.0 — 15 July 2026**
+Current release: **v2.4.0 — 15 July 2026**
 
 ## Canonical workspace
 
@@ -26,6 +26,7 @@ The working library is stored in browser local storage under `student-report-tex
 
 - Snippet collections, text search, Purpose filtering, Recents ordering, and keyboard selection
 - Collection dropdowns in the snippet editor, with a Create New Collection option
+- A Configuration menu with floating, expandable Collections and Stored Report Details panels
 - General Text and Student Report Comment snippet purposes
 - Report templates with student, unit, assessment, teaching-staff, date, time, and date-math fields
 - Snippet-specific checkbox feedback, optional comments, and insertable fields such as `{timing}`
