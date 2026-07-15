@@ -10,6 +10,14 @@ The current version number and build date appear in the green header, making it 
 
 The app saves your reusable snippets and stored report details in the browser on this computer. Report templates and generated output start blank whenever the page is opened. Use **Backup Data** regularly if you want a portable copy.
 
+## Password Protection
+
+The first time the protected build opens, create a password of at least 12 characters. Jiminy Snippet uses that password to derive an encryption key; it does not store the password itself. Existing browser data is migrated into the encrypted vault during setup.
+
+Select **Lock** in the header whenever you finish working. The app also locks after 15 minutes without activity, and repeated incorrect passwords trigger progressively longer delays. There is no password recovery, so keep the password in a trusted password manager.
+
+The password protects the app's browser-local vault from casual access. It cannot protect an already unlocked browser or prevent someone with access to the HTML from replacing the application. **Backup Data** exports a plaintext JSON file, so keep downloaded backups in a secure location.
+
 ## 2. Understand The Main Areas
 
 The app has two main working areas and a Configuration menu:

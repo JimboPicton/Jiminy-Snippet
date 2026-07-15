@@ -10,7 +10,7 @@ if (!scriptMatch) {
 new Function(scriptMatch[1]);
 
 function extractFunction(name) {
-  const match = scriptMatch[1].match(new RegExp(`    function ${name}\\([\\s\\S]*?\\n    \\}`));
+  const match = scriptMatch[1].match(new RegExp(`    (?:async )?function ${name}\\([\\s\\S]*?\\n    \\}`));
   if (!match) throw new Error(`Could not extract ${name} for behavior checks.`);
   return match[0];
 }
@@ -26,7 +26,7 @@ const timingSnippet = { id: "timingId", keyword: "Timing", text: "Review timing.
 const expandedTiming = helpers.expandSnippetFields("1. {timing}", [timingSnippet]);
 
 const checks = {
-  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.6.0">') && html.includes('const appVersion = "2.6.0"') && html.includes("v2.6.0 · 15 July 2026"),
+  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.7.0">') && html.includes('const appVersion = "2.7.0"') && html.includes("v2.7.0 · 15 July 2026"),
   "Build date metadata is consistent": html.includes('<meta name="build-date" content="2026-07-15">') && html.includes('const appBuildDate = "2026-07-15"'),
   "Purpose filter exists once": (html.match(/id="purposeFilter"/g) || []).length === 1,
   "Result list uses list semantics": html.includes('role="list"') && html.includes('role="listitem"'),
@@ -40,6 +40,11 @@ const checks = {
   "Categories can be added and renamed per Unit": html.includes('id="categoryAddBtn"') && html.includes("function addCategory") && html.includes("function renameCategory") && html.includes("item.unit === unit"),
   "Snippet editor is hidden and opened on demand": html.includes('id="snippetEditorPanel" class="panel config-floating snippet-editor-floating hidden"') && html.includes('els.newSnippetBtn.addEventListener("click", openNewSnippetEditor)') && html.includes("revealSnippetEditor();"),
   "Snippet editor floats, expands, and closes": html.includes('id="expandSnippetEditorBtn"') && html.includes('id="closeSnippetEditorBtn"') && html.includes("function setSnippetEditorExpanded") && html.includes("function closeSnippetEditor"),
+  "Password gate blocks the app by default": html.includes('<body class="locked">') && html.includes('id="securityGate"') && html.includes('id="securityPassword" type="password"') && html.includes("function finishUnlock"),
+  "Password derivation follows the configured work factor": html.includes("const pbkdf2Iterations = 600000") && html.includes('{ name: "PBKDF2", hash: "SHA-256", salt, iterations }') && html.includes("crypto.getRandomValues(new Uint8Array(16))"),
+  "Vault uses authenticated AES-GCM encryption": html.includes('{ name: "AES-GCM" }') && html.includes("crypto.getRandomValues(new Uint8Array(12))") && html.includes("tagLength: 128") && html.includes("additionalData"),
+  "Plaintext browser state is removed after migration": html.includes("localStorage.removeItem(storageKey)") && !html.includes("localStorage.setItem(storageKey"),
+  "Security supports rate limits and automatic locking": html.includes("function recordFailedUnlock") && html.includes("const autoLockMilliseconds = 15 * 60 * 1000") && html.includes('id="lockBtn"') && html.includes("function lockApplication"),
   "Configuration menu owns both management panels": html.includes('id="configMenuBtn"') && html.includes('data-open-config="collections"') && html.includes('data-open-config="storedDetails"') && !html.includes('class="sidebar-rail"'),
   "Configuration panels float, expand, and close": (html.match(/class="panel config-floating hidden"/g) || []).length === 2 && (html.match(/data-expand-config=/g) || []).length === 2 && (html.match(/data-close-config=/g) || []).length === 2 && html.includes("function openConfigPanel") && html.includes("function closeConfigPanel"),
   "Stored report details populate report dropdowns": html.includes('<select id="subjectInput">') && html.includes('<select id="assessmentInput">') && html.includes('<select id="teacherInput">') && html.includes("function renderReportDetailSelects"),
@@ -63,8 +68,31 @@ Object.entries(checks).forEach(([name, passed]) => {
   console.log(`${passed ? "PASS" : "FAIL"}: ${name}`);
 });
 
-if (failures.length) {
-  process.exitCode = 1;
-} else {
-  console.log("PASS: Inline JavaScript syntax");
+async function verifyCryptography() {
+  const securitySource = ["deriveSecurityMaterial", "constantTimeEqual"].map(extractFunction).join("\n");
+  const webcrypto = require("node:crypto").webcrypto;
+  const security = new Function("crypto", "TextEncoder", "pbkdf2Iterations", `${securitySource}\nreturn { deriveSecurityMaterial, constantTimeEqual };`)(webcrypto, TextEncoder, 1000);
+  const salt = new Uint8Array(16).fill(7);
+  const correct = await security.deriveSecurityMaterial("correct horse battery staple", salt, 1000);
+  const repeated = await security.deriveSecurityMaterial("correct horse battery staple", salt, 1000);
+  const incorrect = await security.deriveSecurityMaterial("incorrect horse battery staple", salt, 1000);
+  if (!security.constantTimeEqual(correct.verifier, repeated.verifier)) return false;
+  if (security.constantTimeEqual(correct.verifier, incorrect.verifier)) return false;
+  const iv = new Uint8Array(12).fill(3);
+  const plaintext = new TextEncoder().encode("Jiminy Snippet encrypted vault test");
+  const encrypted = await webcrypto.subtle.encrypt({ name: "AES-GCM", iv, tagLength: 128 }, correct.key, plaintext);
+  const decrypted = await webcrypto.subtle.decrypt({ name: "AES-GCM", iv, tagLength: 128 }, repeated.key, encrypted);
+  return new TextDecoder().decode(decrypted) === "Jiminy Snippet encrypted vault test";
 }
+
+verifyCryptography().then(cryptoPassed => {
+  console.log(`${cryptoPassed ? "PASS" : "FAIL"}: Password derivation and AES-GCM round trip`);
+  if (failures.length || !cryptoPassed) {
+    process.exitCode = 1;
+  } else {
+    console.log("PASS: Inline JavaScript syntax");
+  }
+}).catch(error => {
+  console.error(`FAIL: Cryptographic behavior check (${error.message})`);
+  process.exitCode = 1;
+});

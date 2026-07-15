@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.6.0">
+  <meta name="application-version" content="2.7.0">
   <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.6.0</title>
+  <title>Jiminy Snippet v2.7.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -149,6 +149,54 @@
       min-height: 100vh;
       display: grid;
       grid-template-rows: auto 1fr;
+    }
+
+    body.locked {
+      overflow: hidden;
+    }
+
+    body.locked .app {
+      visibility: hidden;
+    }
+
+    .security-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #003f2f, #007a53);
+    }
+
+    .security-card {
+      width: min(430px, 100%);
+      padding: 26px;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .security-card h2 {
+      margin: 0 0 8px;
+      color: var(--cqu-green-deep);
+    }
+
+    .security-card form {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .security-card .primary {
+      justify-content: center;
+    }
+
+    .security-error {
+      min-height: 20px;
+      margin: 0;
+      color: var(--red);
+      font-weight: 700;
     }
 
     header {
@@ -966,7 +1014,26 @@
     }
   </style>
 </head>
-<body>
+<body class="locked">
+  <section id="securityGate" class="security-gate" role="dialog" aria-modal="true" aria-labelledby="securityTitle">
+    <div class="security-card">
+      <div class="mark" aria-hidden="true">JS</div>
+      <h2 id="securityTitle">Unlock Jiminy Snippet</h2>
+      <p id="securityMessage" class="subtle">Enter your password to decrypt the locally stored app data.</p>
+      <form id="securityForm">
+        <label>
+          Password
+          <input id="securityPassword" type="password" required maxlength="128" autocomplete="current-password">
+        </label>
+        <label id="securityConfirmRow" class="hidden">
+          Confirm password
+          <input id="securityPasswordConfirm" type="password" maxlength="128" autocomplete="new-password">
+        </label>
+        <p id="securityError" class="security-error" role="alert" aria-live="assertive"></p>
+        <button id="securitySubmitBtn" type="submit" class="primary">Unlock</button>
+      </form>
+    </div>
+  </section>
   <div class="app">
     <header>
       <div class="topbar">
@@ -974,7 +1041,7 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.6.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.7.0 · 15 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
@@ -987,6 +1054,7 @@
           </div>
           <button type="button" id="exportBtn" title="Export snippets and app data">Backup Data</button>
           <button type="button" id="importBtn" title="Import saved app data">Import Data</button>
+          <button type="button" id="lockBtn" title="Lock encrypted app data">Lock</button>
           <button type="button" id="resetBtn" class="danger" title="Restore starter snippets">Reset</button>
           <button type="button" id="printBtn" class="primary" title="Open report preview">Print Preview</button>
         </div>
@@ -1335,9 +1403,14 @@
       }
     ];
 
-    const appVersion = "2.6.0";
+    const appVersion = "2.7.0";
     const appBuildDate = "2026-07-15";
     const storageKey = "student-report-text-expander-v1";
+    const authStorageKey = "jiminy-snippet-auth-v1";
+    const vaultStorageKey = "jiminy-snippet-vault-v1";
+    const securityFailureKey = "jiminy-snippet-auth-failures-v1";
+    const pbkdf2Iterations = 600000;
+    const autoLockMilliseconds = 15 * 60 * 1000;
     const stateSchemaVersion = 5;
 
     const state = {
@@ -1366,6 +1439,15 @@
 
     const els = {
       snippetList: document.querySelector("#snippetList"),
+      securityGate: document.querySelector("#securityGate"),
+      securityTitle: document.querySelector("#securityTitle"),
+      securityMessage: document.querySelector("#securityMessage"),
+      securityForm: document.querySelector("#securityForm"),
+      securityPassword: document.querySelector("#securityPassword"),
+      securityConfirmRow: document.querySelector("#securityConfirmRow"),
+      securityPasswordConfirm: document.querySelector("#securityPasswordConfirm"),
+      securityError: document.querySelector("#securityError"),
+      securitySubmitBtn: document.querySelector("#securitySubmitBtn"),
       selectedSnippetSection: document.querySelector("#selectedSnippetSection"),
       selectedSnippets: document.querySelector("#selectedSnippets"),
       categoryFilter: document.querySelector("#categoryFilter"),
@@ -1420,6 +1502,7 @@
       printBtn: document.querySelector("#printBtn"),
       exportBtn: document.querySelector("#exportBtn"),
       importBtn: document.querySelector("#importBtn"),
+      lockBtn: document.querySelector("#lockBtn"),
       importFile: document.querySelector("#importFile"),
       resetBtn: document.querySelector("#resetBtn"),
       dateMacroBtn: document.querySelector("#dateMacroBtn"),
@@ -1435,6 +1518,14 @@
 
     let savedReportRange = null;
     let activeSearchIndex = 0;
+    let vaultKey = null;
+    let appUnlocked = false;
+    let securityMode = "unlock";
+    let pendingEncryptedSnapshot = null;
+    let encryptedSaveTimer = 0;
+    let encryptedSaveQueue = Promise.resolve();
+    let autoLockTimer = 0;
+    let lastActivityAt = Date.now();
 
     const detailFields = {
       name: { input: "studentInput", label: "Student" },
@@ -1509,16 +1600,8 @@
         .replace(/^-+|-+$/g, "") || "snippet";
     }
 
-    function loadState() {
-      const saved = localStorage.getItem(storageKey);
-      if (!saved) {
-        state.snippets = [...starterSnippets];
-        saveState();
-        return;
-      }
-
+    function hydrateState(data) {
       try {
-        const data = JSON.parse(saved);
         state.schemaVersion = stateSchemaVersion;
         state.snippets = Array.isArray(data.snippets)
           ? data.snippets.map(snippet => ({
@@ -1548,14 +1631,316 @@
           ...(data.collapsedPanels || {})
         };
         state.reportText = "";
+        return true;
       } catch {
         state.snippets = [...starterSnippets];
         state.customCategories = [];
+        return false;
       }
     }
 
+    function loadLegacyState() {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) {
+        state.snippets = [...starterSnippets];
+        state.customCategories = [];
+        return;
+      }
+      if (!hydrateState(JSON.parse(saved))) throw new Error("Invalid legacy state");
+    }
+
+    function bytesToBase64(bytes) {
+      let binary = "";
+      for (let offset = 0; offset < bytes.length; offset += 32768) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBytes(value) {
+      const binary = atob(value);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return bytes;
+    }
+
+    async function deriveSecurityMaterial(password, salt, iterations = pbkdf2Iterations) {
+      const passwordKey = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(password),
+        "PBKDF2",
+        false,
+        ["deriveBits"]
+      );
+      const bits = new Uint8Array(await crypto.subtle.deriveBits(
+        { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+        passwordKey,
+        512
+      ));
+      const key = await crypto.subtle.importKey("raw", bits.slice(0, 32), { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+      return { key, verifier: bits.slice(32) };
+    }
+
+    function constantTimeEqual(left, right) {
+      if (left.length !== right.length) return false;
+      let difference = 0;
+      for (let index = 0; index < left.length; index += 1) difference |= left[index] ^ right[index];
+      return difference === 0;
+    }
+
+    function readAuthRecord() {
+      try {
+        const record = JSON.parse(localStorage.getItem(authStorageKey) || "null");
+        if (!record || record.version !== 1 || !record.salt || !record.verifier ||
+            !Number.isInteger(record.iterations) || record.iterations < 100000 || record.iterations > 2000000) return null;
+        return record;
+      } catch {
+        return null;
+      }
+    }
+
+    async function encryptStateSnapshot(snapshot, key = vaultKey) {
+      if (!key) throw new Error("The vault is locked.");
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const additionalData = new TextEncoder().encode(vaultStorageKey);
+      const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv, additionalData, tagLength: 128 },
+        key,
+        new TextEncoder().encode(snapshot)
+      ));
+      localStorage.setItem(vaultStorageKey, JSON.stringify({
+        version: 1,
+        iv: bytesToBase64(iv),
+        ciphertext: bytesToBase64(ciphertext)
+      }));
+    }
+
+    async function decryptStoredState(key) {
+      const rawVault = localStorage.getItem(vaultStorageKey);
+      if (!rawVault) return false;
+      const vault = JSON.parse(rawVault);
+      if (!vault || vault.version !== 1 || !vault.iv || !vault.ciphertext) throw new Error("Invalid vault");
+      const plaintext = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: base64ToBytes(vault.iv),
+          additionalData: new TextEncoder().encode(vaultStorageKey),
+          tagLength: 128
+        },
+        key,
+        base64ToBytes(vault.ciphertext)
+      );
+      const data = JSON.parse(new TextDecoder().decode(plaintext));
+      if (!hydrateState(data)) throw new Error("Invalid encrypted state");
+      return true;
+    }
+
+    function queueEncryptedSnapshot(snapshot) {
+      encryptedSaveQueue = encryptedSaveQueue
+        .then(() => encryptStateSnapshot(snapshot))
+        .catch(error => console.error("Encrypted save failed", error));
+      return encryptedSaveQueue;
+    }
+
     function saveState() {
-      localStorage.setItem(storageKey, JSON.stringify(state));
+      if (!vaultKey || !appUnlocked) return;
+      pendingEncryptedSnapshot = JSON.stringify(state);
+      clearTimeout(encryptedSaveTimer);
+      encryptedSaveTimer = setTimeout(() => {
+        const snapshot = pendingEncryptedSnapshot;
+        pendingEncryptedSnapshot = null;
+        if (snapshot) queueEncryptedSnapshot(snapshot);
+      }, 150);
+    }
+
+    async function flushEncryptedState() {
+      clearTimeout(encryptedSaveTimer);
+      if (pendingEncryptedSnapshot) {
+        const snapshot = pendingEncryptedSnapshot;
+        pendingEncryptedSnapshot = null;
+        queueEncryptedSnapshot(snapshot);
+      }
+      await encryptedSaveQueue;
+    }
+
+    function readFailureRecord() {
+      try {
+        const record = JSON.parse(localStorage.getItem(securityFailureKey) || "null");
+        return record && Number.isFinite(record.count) && Number.isFinite(record.lockedUntil)
+          ? record
+          : { count: 0, lockedUntil: 0 };
+      } catch {
+        return { count: 0, lockedUntil: 0 };
+      }
+    }
+
+    function setSecurityBusy(busy) {
+      els.securitySubmitBtn.disabled = busy;
+      els.securityPassword.disabled = busy;
+      els.securityPasswordConfirm.disabled = busy;
+      els.securitySubmitBtn.textContent = busy
+        ? (securityMode === "setup" ? "Securing…" : "Unlocking…")
+        : (securityMode === "setup" ? "Create Password" : "Unlock");
+    }
+
+    function showSecurityMode(mode) {
+      securityMode = mode;
+      const setup = mode === "setup";
+      els.securityTitle.textContent = setup ? "Protect Jiminy Snippet" : "Unlock Jiminy Snippet";
+      els.securityMessage.textContent = setup
+        ? "Create a password to encrypt the app data stored in this browser. Use at least 12 characters; lost passwords cannot be recovered."
+        : "Enter your password to decrypt the locally stored app data.";
+      els.securityConfirmRow.classList.toggle("hidden", !setup);
+      els.securityPassword.autocomplete = setup ? "new-password" : "current-password";
+      els.securityPassword.minLength = setup ? 12 : 1;
+      els.securityPasswordConfirm.required = setup;
+      els.securityError.textContent = "";
+      setSecurityBusy(false);
+      els.securityPassword.focus();
+    }
+
+    function resetAutoLock() {
+      if (!appUnlocked) return;
+      lastActivityAt = Date.now();
+      clearTimeout(autoLockTimer);
+      autoLockTimer = setTimeout(() => lockApplication(), autoLockMilliseconds);
+    }
+
+    function finishUnlock() {
+      appUnlocked = true;
+      document.body.classList.remove("locked");
+      els.securityGate.classList.add("hidden");
+      renderAll();
+      renderChoiceEditor();
+      resetAutoLock();
+      els.subjectInput.focus();
+    }
+
+    async function recordFailedUnlock() {
+      const previous = readFailureRecord();
+      const count = previous.count + 1;
+      const delay = Math.min(30000, 1000 * (2 ** Math.min(count - 1, 5)));
+      const lockedUntil = Date.now() + delay;
+      localStorage.setItem(securityFailureKey, JSON.stringify({ count, lockedUntil }));
+      els.securityError.textContent = `Incorrect password. Try again in ${Math.ceil(delay / 1000)} seconds.`;
+      setSecurityBusy(true);
+      setTimeout(() => {
+        setSecurityBusy(false);
+        els.securityPassword.select();
+      }, delay);
+    }
+
+    async function handleSecuritySubmit(event) {
+      event.preventDefault();
+      els.securityError.textContent = "";
+      if (!window.crypto?.subtle) {
+        els.securityError.textContent = "This browser does not support the Web Crypto API required to protect the app.";
+        return;
+      }
+
+      const password = els.securityPassword.value;
+      if (password.length > 128) {
+        els.securityError.textContent = "Password must be no more than 128 characters.";
+        return;
+      }
+
+      if (securityMode === "setup") {
+        if (password.length < 12) {
+          els.securityError.textContent = "Use a password of at least 12 characters.";
+          return;
+        }
+        if (password !== els.securityPasswordConfirm.value) {
+          els.securityError.textContent = "The passwords do not match.";
+          return;
+        }
+        setSecurityBusy(true);
+        try {
+          const salt = crypto.getRandomValues(new Uint8Array(16));
+          const material = await deriveSecurityMaterial(password, salt);
+          localStorage.setItem(authStorageKey, JSON.stringify({
+            version: 1,
+            algorithm: "PBKDF2-HMAC-SHA-256",
+            iterations: pbkdf2Iterations,
+            salt: bytesToBase64(salt),
+            verifier: bytesToBase64(material.verifier)
+          }));
+          vaultKey = material.key;
+          loadLegacyState();
+          await encryptStateSnapshot(JSON.stringify(state), vaultKey);
+          localStorage.removeItem(storageKey);
+          localStorage.removeItem(securityFailureKey);
+          els.securityPassword.value = "";
+          els.securityPasswordConfirm.value = "";
+          finishUnlock();
+        } catch {
+          els.securityError.textContent = "The encrypted vault could not be created. No password was stored.";
+          localStorage.removeItem(authStorageKey);
+          localStorage.removeItem(vaultStorageKey);
+          vaultKey = null;
+          setSecurityBusy(false);
+        }
+        return;
+      }
+
+      const failures = readFailureRecord();
+      if (failures.lockedUntil > Date.now()) {
+        els.securityError.textContent = `Too many attempts. Try again in ${Math.ceil((failures.lockedUntil - Date.now()) / 1000)} seconds.`;
+        return;
+      }
+
+      const auth = readAuthRecord();
+      if (!auth) {
+        els.securityError.textContent = "The password configuration is missing or damaged.";
+        return;
+      }
+      setSecurityBusy(true);
+      try {
+        const material = await deriveSecurityMaterial(password, base64ToBytes(auth.salt), auth.iterations);
+        if (!constantTimeEqual(material.verifier, base64ToBytes(auth.verifier))) {
+          await recordFailedUnlock();
+          return;
+        }
+        vaultKey = material.key;
+        const loaded = await decryptStoredState(vaultKey);
+        if (!loaded) {
+          loadLegacyState();
+          await encryptStateSnapshot(JSON.stringify(state), vaultKey);
+          localStorage.removeItem(storageKey);
+        }
+        localStorage.removeItem(securityFailureKey);
+        els.securityPassword.value = "";
+        finishUnlock();
+      } catch {
+        vaultKey = null;
+        els.securityError.textContent = "The encrypted data could not be opened. The password may be incorrect or the stored data may be damaged.";
+        setSecurityBusy(false);
+      }
+    }
+
+    async function lockApplication() {
+      if (!appUnlocked) return;
+      await flushEncryptedState();
+      appUnlocked = false;
+      vaultKey = null;
+      clearTimeout(autoLockTimer);
+      location.reload();
+    }
+
+    function initializeSecurity() {
+      if (!window.crypto?.subtle) {
+        showSecurityMode("unlock");
+        els.securityError.textContent = "This browser cannot run the encryption required to open Jiminy Snippet.";
+        setSecurityBusy(true);
+        return;
+      }
+      const auth = readAuthRecord();
+      if (!auth && localStorage.getItem(vaultStorageKey)) {
+        showSecurityMode("unlock");
+        els.securityError.textContent = "The encrypted vault exists, but its password configuration is missing. Restore from a backup after clearing this site's stored data.";
+        setSecurityBusy(true);
+        return;
+      }
+      showSecurityMode(auth ? "unlock" : "setup");
     }
 
     function escapeHtml(value) {
@@ -3065,6 +3450,7 @@
     });
     els.exportBtn.addEventListener("click", exportData);
     els.importBtn.addEventListener("click", () => els.importFile.click());
+    els.lockBtn.addEventListener("click", () => lockApplication());
     els.importFile.addEventListener("change", event => {
       const [file] = event.target.files;
       if (file) importData(file);
@@ -3081,9 +3467,20 @@
       renderAll();
     });
 
-    loadState();
-    renderAll();
-    renderChoiceEditor();
+    els.securityForm.addEventListener("submit", handleSecuritySubmit);
+    ["pointerdown", "keydown", "touchstart"].forEach(eventName => {
+      document.addEventListener(eventName, resetAutoLock, { passive: true });
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (appUnlocked && document.visibilityState === "visible" && Date.now() - lastActivityAt >= autoLockMilliseconds) {
+        lockApplication();
+      }
+    });
+    window.addEventListener("pagehide", () => {
+      if (appUnlocked) flushEncryptedState();
+    });
+
+    initializeSecurity();
   </script>
 </body>
 </html>
