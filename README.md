@@ -2,7 +2,7 @@
 
 Jiminy Snippet is a self-contained HTML/JSON text-snippet and student-report composition tool. It supports Unit-based snippet categories, keyboard search, dynamic report fields, rich-text editing, printing, and portable JSON backups.
 
-Current release: **v2.8.0 — 15 July 2026**
+Current release: **v2.9.0 — 19 July 2026**
 
 ## Canonical workspace
 
@@ -20,9 +20,9 @@ Suggested first prompt:
 
 Open `index.html` in a modern desktop browser. No build command or server is required.
 
-The working library is stored as an encrypted browser-local vault after password setup. Storage is specific to the browser and local file location, so use **Backup Data** before moving the app, changing browsers, resetting data, or replacing a build. Exported JSON backups are portable plaintext files and should be stored securely.
+The working library is stored in ordinary browser local storage. Password protection is disabled in this development build and can be reconsidered before final release. Storage is specific to the browser and local file location, so use **Backup Data** before moving the app, changing browsers, resetting data, or replacing a build.
 
-The password gate protects locally stored data from casual access, but a self-contained front-end cannot defend against someone who can modify the HTML, inspect a browser that is already unlocked, or install malicious software. Passwords and recovery keys are never stored directly. The one-time recovery key must be saved when shown; losing both the password and recovery key makes the vault unrecoverable. Clearing browser site data removes the encrypted vault.
+If this browser already contains a password-protected v2.7 or v2.8 vault, Jiminy Snippet requests one final password or recovery-key unlock, migrates the data back to ordinary local storage, and removes the password configuration.
 
 ## Current capabilities
 
@@ -32,10 +32,7 @@ The password gate protects locally stored data from casual access, but a self-co
 - A Configuration menu with floating, expandable Categories and Stored Report Details panels
 - Category creation, renaming, and deletion scoped to individual Units
 - A hidden-by-default floating snippet editor opened by New or Edit, with Expand/Restore and Close controls
-- Password-gated local storage using PBKDF2-HMAC-SHA-256 and AES-256-GCM authenticated encryption
-- Progressive unlock delays, manual locking, and automatic locking after 15 minutes of inactivity
-- One-time 256-bit recovery keys that can unlock the data-encryption key and set a replacement password
-- Automatic migration of earlier password vaults to the recoverable envelope-encryption format
+- Password-free development workflow, with one-time migration support for earlier encrypted vaults
 - General Text and Student Report Comment snippet purposes
 - Report templates with student, unit, assessment, teaching-staff, date, time, and date-math fields
 - Snippet-specific checkbox feedback, optional comments, and insertable fields such as `{timing}`

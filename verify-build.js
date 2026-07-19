@@ -26,8 +26,8 @@ const timingSnippet = { id: "timingId", keyword: "Timing", text: "Review timing.
 const expandedTiming = helpers.expandSnippetFields("1. {timing}", [timingSnippet]);
 
 const checks = {
-  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.8.0">') && html.includes('const appVersion = "2.8.0"') && html.includes("v2.8.0 · 15 July 2026"),
-  "Build date metadata is consistent": html.includes('<meta name="build-date" content="2026-07-15">') && html.includes('const appBuildDate = "2026-07-15"'),
+  "Version metadata is consistent": html.includes('<meta name="application-version" content="2.9.0">') && html.includes('const appVersion = "2.9.0"') && html.includes("v2.9.0 · 19 July 2026"),
+  "Build date metadata is consistent": html.includes('<meta name="build-date" content="2026-07-19">') && html.includes('const appBuildDate = "2026-07-19"'),
   "Purpose filter exists once": (html.match(/id="purposeFilter"/g) || []).length === 1,
   "Result list uses list semantics": html.includes('role="list"') && html.includes('role="listitem"'),
   "Legacy listbox semantics are absent": !html.includes('role="listbox"') && !html.includes('role="option"'),
@@ -40,11 +40,11 @@ const checks = {
   "Categories can be added and renamed per Unit": html.includes('id="categoryAddBtn"') && html.includes("function addCategory") && html.includes("function renameCategory") && html.includes("item.unit === unit"),
   "Snippet editor is hidden and opened on demand": html.includes('id="snippetEditorPanel" class="panel config-floating snippet-editor-floating hidden"') && html.includes('els.newSnippetBtn.addEventListener("click", openNewSnippetEditor)') && html.includes("revealSnippetEditor();"),
   "Snippet editor floats, expands, and closes": html.includes('id="expandSnippetEditorBtn"') && html.includes('id="closeSnippetEditorBtn"') && html.includes("function setSnippetEditorExpanded") && html.includes("function closeSnippetEditor"),
-  "Password gate blocks the app by default": html.includes('<body class="locked">') && html.includes('id="securityGate"') && html.includes('id="securityPassword" type="password"') && html.includes("function finishUnlock"),
+  "Password protection is disabled for development": html.includes("const passwordProtectionEnabled = false") && html.includes('<body>') && html.includes('id="securityGate" class="security-gate hidden"') && !html.includes('id="lockBtn"'),
   "Password derivation follows the configured work factor": html.includes("const pbkdf2Iterations = 600000") && html.includes('{ name: "PBKDF2", hash: "SHA-256", salt, iterations }') && html.includes("crypto.getRandomValues(new Uint8Array(16))"),
   "Vault uses authenticated AES-GCM encryption": html.includes('{ name: "AES-GCM" }') && html.includes("crypto.getRandomValues(new Uint8Array(12))") && html.includes("tagLength: 128") && html.includes("additionalData"),
-  "Plaintext browser state is removed after migration": html.includes("localStorage.removeItem(storageKey)") && !html.includes("localStorage.setItem(storageKey"),
-  "Security supports rate limits and automatic locking": html.includes("function recordFailedUnlock") && html.includes("const autoLockMilliseconds = 15 * 60 * 1000") && html.includes('id="lockBtn"') && html.includes("function lockApplication"),
+  "Ordinary local storage is active": html.includes("localStorage.setItem(storageKey, JSON.stringify(state))") && html.includes("if (!passwordProtectionEnabled)"),
+  "Encrypted vaults migrate out of password protection": html.includes("function removePasswordProtection") && html.includes("localStorage.removeItem(authStorageKey)") && html.includes("localStorage.removeItem(vaultStorageKey)"),
   "Recovery key is generated and shown once": html.includes("function generateRecoveryCode") && html.includes("crypto.getRandomValues(new Uint8Array(32))") && html.includes('id="recoveryKeyPanel"') && html.includes('id="continueAfterRecoveryBtn"'),
   "Recovery uses separate authenticated key wrapping": html.includes("function createRecoveryEnvelope") && html.includes("jiminy-password-wrap-v2") && html.includes("jiminy-recovery-wrap-v2") && html.includes("function unwrapDataKey"),
   "Recovery resets the password without changing vault data": html.includes("function rewrapPassword") && html.includes('showSecurityMode("reset")') && html.includes("recoveredDataKeyBytes"),

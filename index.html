@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="2.8.0">
-  <meta name="build-date" content="2026-07-15">
-  <title>Jiminy Snippet v2.8.0</title>
+  <meta name="application-version" content="2.9.0">
+  <meta name="build-date" content="2026-07-19">
+  <title>Jiminy Snippet v2.9.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1033,8 +1033,8 @@
     }
   </style>
 </head>
-<body class="locked">
-  <section id="securityGate" class="security-gate" role="dialog" aria-modal="true" aria-labelledby="securityTitle">
+<body>
+  <section id="securityGate" class="security-gate hidden" role="dialog" aria-modal="true" aria-labelledby="securityTitle">
     <div class="security-card">
       <div class="mark" aria-hidden="true">JS</div>
       <h2 id="securityTitle">Unlock Jiminy Snippet</h2>
@@ -1068,7 +1068,7 @@
           <div class="mark" aria-hidden="true">JS</div>
           <div>
             <h1>Jiminy Snippet</h1>
-            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.8.0 · 15 July 2026</span></p>
+            <p class="subtle">Build reusable assessment comments from abbreviations and fields. <span class="build-stamp">v2.9.0 · 19 July 2026</span></p>
           </div>
         </div>
         <div class="top-actions">
@@ -1081,7 +1081,6 @@
           </div>
           <button type="button" id="exportBtn" title="Export snippets and app data">Backup Data</button>
           <button type="button" id="importBtn" title="Import saved app data">Import Data</button>
-          <button type="button" id="lockBtn" title="Lock encrypted app data">Lock</button>
           <button type="button" id="resetBtn" class="danger" title="Restore starter snippets">Reset</button>
           <button type="button" id="printBtn" class="primary" title="Open report preview">Print Preview</button>
         </div>
@@ -1430,14 +1429,15 @@
       }
     ];
 
-    const appVersion = "2.8.0";
-    const appBuildDate = "2026-07-15";
+    const appVersion = "2.9.0";
+    const appBuildDate = "2026-07-19";
     const storageKey = "student-report-text-expander-v1";
     const authStorageKey = "jiminy-snippet-auth-v1";
     const vaultStorageKey = "jiminy-snippet-vault-v1";
     const securityFailureKey = "jiminy-snippet-auth-failures-v1";
     const pbkdf2Iterations = 600000;
     const autoLockMilliseconds = 15 * 60 * 1000;
+    const passwordProtectionEnabled = false;
     const stateSchemaVersion = 5;
 
     const state = {
@@ -1535,7 +1535,6 @@
       printBtn: document.querySelector("#printBtn"),
       exportBtn: document.querySelector("#exportBtn"),
       importBtn: document.querySelector("#importBtn"),
-      lockBtn: document.querySelector("#lockBtn"),
       importFile: document.querySelector("#importFile"),
       resetBtn: document.querySelector("#resetBtn"),
       dateMacroBtn: document.querySelector("#dateMacroBtn"),
@@ -1849,6 +1848,10 @@
     }
 
     function saveState() {
+      if (!passwordProtectionEnabled) {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        return;
+      }
       if (!vaultKey || !appUnlocked) return;
       pendingEncryptedSnapshot = JSON.stringify(state);
       clearTimeout(encryptedSaveTimer);
@@ -1894,6 +1897,8 @@
     }
 
     function showSecurityMode(mode) {
+      document.body.classList.add("locked");
+      els.securityGate.classList.remove("hidden");
       securityMode = mode;
       const needsNewPassword = mode === "setup" || mode === "reset";
       const content = {
@@ -1933,7 +1938,7 @@
     }
 
     function resetAutoLock() {
-      if (!appUnlocked) return;
+      if (!passwordProtectionEnabled || !appUnlocked) return;
       lastActivityAt = Date.now();
       clearTimeout(autoLockTimer);
       autoLockTimer = setTimeout(() => lockApplication(), autoLockMilliseconds);
@@ -1947,6 +1952,19 @@
       renderChoiceEditor();
       resetAutoLock();
       els.subjectInput.focus();
+    }
+
+    function removePasswordProtection() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      localStorage.removeItem(authStorageKey);
+      localStorage.removeItem(vaultStorageKey);
+      localStorage.removeItem(securityFailureKey);
+      pendingEncryptedSnapshot = null;
+      clearTimeout(encryptedSaveTimer);
+      vaultKey = null;
+      recoveredDataKeyBytes = null;
+      recoveryAuthRecord = null;
+      finishUnlock();
     }
 
     async function recordFailedUnlock() {
@@ -2059,6 +2077,11 @@
           const dataKeyBytes = await unwrapDataKey(auth.recoveryWrap, material.key, "jiminy-recovery-wrap-v2");
           vaultKey = await importVaultKey(dataKeyBytes);
           if (!await decryptStoredState(vaultKey)) throw new Error("Missing vault");
+          if (!passwordProtectionEnabled) {
+            dataKeyBytes.fill(0);
+            removePasswordProtection();
+            return;
+          }
           recoveredDataKeyBytes = dataKeyBytes;
           recoveryAuthRecord = auth;
           localStorage.removeItem(securityFailureKey);
@@ -2087,6 +2110,10 @@
           vaultKey = await importVaultKey(dataKeyBytes);
           if (!await decryptStoredState(vaultKey)) throw new Error("Missing vault");
           dataKeyBytes.fill(0);
+          if (!passwordProtectionEnabled) {
+            removePasswordProtection();
+            return;
+          }
           localStorage.removeItem(securityFailureKey);
           els.securityPassword.value = "";
           finishUnlock();
@@ -2095,6 +2122,10 @@
 
         vaultKey = material.key;
         if (!await decryptStoredState(vaultKey)) loadLegacyState();
+        if (!passwordProtectionEnabled) {
+          removePasswordProtection();
+          return;
+        }
         const envelope = await createRecoveryEnvelope(credential);
         vaultKey = envelope.key;
         await encryptStateSnapshot(JSON.stringify(state), vaultKey);
@@ -2112,7 +2143,7 @@
     }
 
     async function lockApplication() {
-      if (!appUnlocked) return;
+      if (!passwordProtectionEnabled || !appUnlocked) return;
       await flushEncryptedState();
       appUnlocked = false;
       vaultKey = null;
@@ -2121,6 +2152,26 @@
     }
 
     function initializeSecurity() {
+      if (!passwordProtectionEnabled) {
+        const auth = readAuthRecord();
+        const hasVault = Boolean(localStorage.getItem(vaultStorageKey));
+        if (!hasVault) {
+          localStorage.removeItem(authStorageKey);
+          localStorage.removeItem(securityFailureKey);
+          loadLegacyState();
+          finishUnlock();
+          return;
+        }
+        if (!auth) {
+          showSecurityMode("unlock");
+          els.securityError.textContent = "Encrypted data was found, but its password configuration is missing. Restore a backup after clearing this site's stored data.";
+          setSecurityBusy(true);
+          return;
+        }
+        showSecurityMode("unlock");
+        els.securityMessage.textContent = "Enter the existing password once to remove password protection and restore ordinary local storage.";
+        return;
+      }
       if (!window.crypto?.subtle) {
         showSecurityMode("unlock");
         els.securityError.textContent = "This browser cannot run the encryption required to open Jiminy Snippet.";
@@ -3644,7 +3695,6 @@
     });
     els.exportBtn.addEventListener("click", exportData);
     els.importBtn.addEventListener("click", () => els.importFile.click());
-    els.lockBtn.addEventListener("click", () => lockApplication());
     els.importFile.addEventListener("change", event => {
       const [file] = event.target.files;
       if (file) importData(file);
